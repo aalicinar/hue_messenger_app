@@ -8,36 +8,13 @@ class HueLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(size * 0.28),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFA855F7)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              'H',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: size * 0.46,
-                fontStyle: FontStyle.italic,
-                letterSpacing: -0.5,
-                height: 1,
-              ),
-            ),
+    return ClipRRect(
+          borderRadius: BorderRadius.circular(size * 0.22),
+          child: Image.asset(
+            'assets/icons/hue_logo_gradient.png',
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
           ),
         )
         .animate(onPlay: (c) => c.repeat(reverse: true))

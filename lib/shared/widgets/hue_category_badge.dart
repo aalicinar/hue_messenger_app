@@ -23,17 +23,12 @@ class HueCategoryBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color, Color.lerp(color, Colors.white, 0.2) ?? color],
-        ),
+        borderRadius: BorderRadius.circular(size * 0.22),
         border: Border.all(
           color: isSelected
               ? Colors.white.withValues(alpha: 0.95)
-              : Colors.white.withValues(alpha: 0.4),
-          width: isSelected ? 2.2 : 1.2,
+              : Colors.transparent,
+          width: isSelected ? 2.2 : 0,
         ),
         boxShadow: [
           BoxShadow(
@@ -48,17 +43,13 @@ class HueCategoryBadge extends StatelessWidget {
         scale: isSelected ? 1.08 : 1.0,
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutBack,
-        child: Center(
-          child: Text(
-            'H',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontStyle: FontStyle.italic,
-              letterSpacing: -0.3,
-              fontSize: size * 0.42,
-              height: 1,
-            ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(size * 0.22),
+          child: Image.asset(
+            category.iconAsset,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
           ),
         ),
       ),

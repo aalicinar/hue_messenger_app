@@ -94,7 +94,7 @@ class SettingsScreen extends ConsumerWidget {
                       icon: CupertinoIcons.globe,
                       iconColor: const Color(0xFF06B6D4),
                       title: S.get(lang, 'settings_language'),
-                      subtitle: '${lang.flag} ${lang.label}',
+                      subtitle: lang.label,
                       onTap: () => _showLanguagePicker(
                         context: context,
                         lang: lang,
@@ -225,7 +225,7 @@ class SettingsScreen extends ConsumerWidget {
                   Navigator.of(sheetContext).pop();
                   onSelected(language);
                 },
-                child: Text('${language.flag}  ${language.label}'),
+                child: Text(language.label),
               ),
           ],
           cancelButton: CupertinoActionSheetAction(

@@ -43,4 +43,17 @@ extension HueCategoryX on HueCategory {
         return HueColors.blue;
     }
   }
+
+  String get iconAsset {
+    switch (this) {
+      case HueCategory.red:
+        return 'assets/icons/hue_logo_red.png';
+      case HueCategory.yellow:
+        return 'assets/icons/hue_logo_yellow.png';
+      case HueCategory.green:
+        return 'assets/icons/hue_logo_green.png';
+      case HueCategory.blue:
+        return 'assets/icons/hue_logo_blue.png';
+    }
+  }
 }
