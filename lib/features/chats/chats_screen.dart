@@ -1,13 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../app/app_strings.dart';
+import '../../app/locale_provider.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/mock/mock_repo.dart';
 import '../../core/models/chat.dart';
 import '../../core/models/user.dart';
+import '../../shared/widgets/hue_avatar.dart';
 import '../../shared/widgets/hue_backdrop.dart';
 import '../../shared/widgets/hue_logo.dart';
 import '../chat_detail/chat_detail_screen.dart';
@@ -21,39 +25,46 @@ class ChatsScreen extends ConsumerWidget {
     final chatsState = ref.watch(chatsControllerProvider);
     final controller = ref.read(chatsControllerProvider.notifier);
     final repository = ref.watch(mockRepositoryProvider);
+    final lang = ref.watch(localeProvider);
     final chats = chatsState.chats;
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(middle: Text('Sohbetler')),
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(S.get(lang, 'chats_title')),
+      ),
       child: HueBackdrop(
         child: SafeArea(
+          bottom: false,
           child: Padding(
-            padding: const EdgeInsets.all(HueSpacing.md),
+            padding: const EdgeInsets.fromLTRB(
+              HueSpacing.md,
+              HueSpacing.md,
+              HueSpacing.md,
+              0,
+            ),
             child: Column(
               children: [
                 HueGlassCard(
                   child: Row(
                     children: [
-                      const HueLogo(size: 44),
+                      const HueLogo(size: 42),
                       const SizedBox(width: HueSpacing.sm),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Konuşmalar',
-                              style: CupertinoTheme.of(context)
-                                  .textTheme
-                                  .navTitleTextStyle
-                                  .copyWith(fontSize: 18),
+                              S.get(lang, 'chats_header'),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w800),
                             ),
-                            const SizedBox(height: HueSpacing.xxs),
+                            const SizedBox(height: 2),
                             Text(
-                              '${chats.length} aktif sohbet',
-                              style: CupertinoTheme.of(context)
-                                  .textTheme
-                                  .textStyle
-                                  .copyWith(color: HueColors.textSecondary),
+                              S
+                                  .get(lang, 'chats_active_count')
+                                  .replaceAll('{n}', '${chats.length}'),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: HueColors.textSecondary),
                             ),
                           ],
                         ),
@@ -65,13 +76,29 @@ class ChatsScreen extends ConsumerWidget {
                 Expanded(
                   child: chats.isEmpty
                       ? Center(
-                          child: Text(
-                            'Henüz sohbet yok.',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: HueColors.textSecondary),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.chat_bubble_2,
+                                size: 48,
+                                color: HueColors.textSecondary.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: HueSpacing.sm),
+                              Text(
+                                S.get(lang, 'chats_empty'),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: HueColors.textSecondary),
+                              ),
+                            ],
                           ),
                         )
                       : ListView.separated(
+                          padding: const EdgeInsets.only(
+                            bottom: HueSpacing.xxl + HueSpacing.xl,
+                          ),
                           itemCount: chats.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: HueSpacing.xs),
@@ -79,59 +106,86 @@ class ChatsScreen extends ConsumerWidget {
                             final chat = chats[index];
                             final otherUser = _otherUser(repository, chat);
                             return _ChatListItem(
-                              title: otherUser?.name ?? 'Bilinmiyor',
-                              subtitle: chat.lastPreview ?? 'Henüz mesaj yok',
-                              time: _formatTime(chat.lastAt),
-                              onTap: () async {
-                                await Navigator.of(context).push(
-                                  CupertinoPageRoute<void>(
-                                    builder: (_) =>
-                                        ChatDetailScreen(chatId: chat.id),
-                                  ),
+                                  title:
+                                      otherUser?.name ??
+                                      S.get(lang, 'chats_unknown'),
+                                  subtitle:
+                                      chat.lastPreview ??
+                                      S.get(lang, 'chats_no_message'),
+                                  time: _formatTime(chat.lastAt),
+                                  onTap: () async {
+                                    await Navigator.of(context).push(
+                                      CupertinoPageRoute<void>(
+                                        builder: (_) =>
+                                            ChatDetailScreen(chatId: chat.id),
+                                      ),
+                                    );
+                                    controller.load();
+                                  },
+                                )
+                                .animate()
+                                .fadeIn(
+                                  duration: 400.ms,
+                                  delay: (80 * index).ms,
+                                )
+                                .slideY(
+                                  begin: 0.12,
+                                  end: 0,
+                                  duration: 400.ms,
+                                  delay: (80 * index).ms,
+                                  curve: Curves.easeOutCubic,
                                 );
-                                controller.load();
-                              },
-                            );
                           },
                         ),
                 ),
-                const SizedBox(height: HueSpacing.sm),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    _showNewChatSheet(context, ref);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: HueSpacing.md,
-                      vertical: HueSpacing.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: HueColors.blue,
-                      borderRadius: BorderRadius.circular(HueRadius.lg),
-                      boxShadow: [
-                        BoxShadow(
-                          color: HueColors.blue.withValues(alpha: 0.28),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: HueSpacing.sm),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      _showNewChatSheet(context, ref, lang);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: HueSpacing.md,
+                        vertical: HueSpacing.sm + 2,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: HueColors.accentGradient,
                         ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.add, color: Colors.white),
-                        SizedBox(width: HueSpacing.xs),
-                        Text(
-                          'Yeni Sohbet Başlat',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                        borderRadius: BorderRadius.circular(HueRadius.lg),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF6366F1,
+                            ).withValues(alpha: 0.35),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            CupertinoIcons.add,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: HueSpacing.xs),
+                          Text(
+                            S.get(lang, 'chats_new'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -143,7 +197,11 @@ class ChatsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showNewChatSheet(BuildContext context, WidgetRef ref) async {
+  Future<void> _showNewChatSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppLanguage lang,
+  ) async {
     final repository = ref.read(mockRepositoryProvider);
     final controller = ref.read(chatsControllerProvider.notifier);
     final candidates = repository
@@ -155,7 +213,7 @@ class ChatsScreen extends ConsumerWidget {
       context: context,
       builder: (sheetContext) {
         return CupertinoActionSheet(
-          title: const Text('Yeni Sohbet Başlat'),
+          title: Text(S.get(lang, 'chats_new_title')),
           actions: [
             for (final user in candidates)
               CupertinoActionSheetAction(
@@ -175,7 +233,7 @@ class ChatsScreen extends ConsumerWidget {
           cancelButton: CupertinoActionSheetAction(
             onPressed: () => Navigator.of(sheetContext).pop(),
             isDefaultAction: true,
-            child: const Text('Vazgeç'),
+            child: Text(S.get(lang, 'cancel')),
           ),
         );
       },
@@ -214,53 +272,41 @@ class _ChatListItem extends StatelessWidget {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(HueSpacing.md),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(HueRadius.md),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 14,
-              offset: const Offset(0, 7),
-            ),
-          ],
-        ),
+      child: HueGlassCard(
+        padding: const EdgeInsets.all(HueSpacing.sm + 2),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: HueColors.blue.withValues(alpha: 0.14),
-              child: Text(
-                title.characters.first.toUpperCase(),
-                style: const TextStyle(
-                  color: HueColors.blue,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+            HueAvatar(name: title, size: 48),
             const SizedBox(width: HueSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: HueSpacing.xxs),
+                  Text(
+                    title,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(fontSize: 16),
+                  ),
+                  const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: HueColors.textSecondary,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: HueSpacing.sm),
+            const SizedBox(width: HueSpacing.xs),
             Text(
               time,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: HueColors.textSecondary),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: HueColors.textSecondary,
+                fontSize: 12,
+              ),
             ),
           ],
         ),

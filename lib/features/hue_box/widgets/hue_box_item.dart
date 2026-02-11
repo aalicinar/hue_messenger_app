@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../core/models/hue_category.dart';
 import '../../../core/models/message.dart';
+import '../../../shared/widgets/hue_avatar.dart';
+import '../../../shared/widgets/hue_backdrop.dart';
 import '../../../shared/widgets/hue_category_badge.dart';
 
 class HueBoxItem extends StatelessWidget {
@@ -16,6 +18,8 @@ class HueBoxItem extends StatelessWidget {
     required this.onAcknowledge,
     required this.onAcknowledgeSwipe,
     required this.onLongPress,
+    this.replyLabel = 'Reply',
+    this.quickAckLabel = 'Quick acknowledge',
   });
 
   final Message message;
@@ -24,6 +28,8 @@ class HueBoxItem extends StatelessWidget {
   final VoidCallback onAcknowledge;
   final VoidCallback onAcknowledgeSwipe;
   final VoidCallback? onLongPress;
+  final String replyLabel;
+  final String quickAckLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -39,84 +45,81 @@ class HueBoxItem extends StatelessWidget {
         onAcknowledgeSwipe();
         return false;
       },
-      background: _AckSwipeBackground(color: categoryColor),
+      background: _AckSwipeBackground(
+        color: categoryColor,
+        label: quickAckLabel,
+      ),
       child: GestureDetector(
         onTap: onTap,
         onLongPress: onLongPress,
-        child: Container(
-          padding: const EdgeInsets.all(HueSpacing.md),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(HueRadius.md),
-            border: Border(left: BorderSide(color: categoryColor, width: 4)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+        child: HueGlassCard(
+          padding: const EdgeInsets.all(HueSpacing.sm + 2),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: categoryColor.withValues(alpha: 0.18),
-                child: Text(
-                  senderName.characters.first.toUpperCase(),
-                  style: TextStyle(
-                    color: categoryColor,
-                    fontWeight: FontWeight.w700,
+              Stack(
+                children: [
+                  HueAvatar(name: senderName, size: 46),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: HueCategoryBadge(
+                      category: message.category!,
+                      size: 18,
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(width: HueSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          senderName,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(width: HueSpacing.xs),
-                        HueCategoryBadge(category: message.category!, size: 22),
-                      ],
+                    Text(
+                      senderName,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(fontSize: 15),
                     ),
-                    const SizedBox(height: HueSpacing.xxs),
+                    const SizedBox(height: 3),
                     Text(
                       message.templateText ?? '',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: HueColors.textSecondary,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: HueSpacing.sm),
+              const SizedBox(width: HueSpacing.xs),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     DateFormat('HH:mm').format(message.createdAt),
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: HueColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
-                  const SizedBox(height: HueSpacing.xxs),
+                  const SizedBox(height: HueSpacing.xs),
                   if (isUnacked)
                     CupertinoButton(
-                      minimumSize: const Size(34, 34),
+                      minimumSize: const Size(34, 30),
                       padding: const EdgeInsets.symmetric(
                         horizontal: HueSpacing.sm,
+                        vertical: 4,
                       ),
-                      color: categoryColor.withValues(alpha: 0.16),
+                      color: categoryColor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(HueRadius.pill),
                       onPressed: onAcknowledge,
                       child: Text(
-                        'Yanıtla',
+                        replyLabel,
                         style: TextStyle(
                           color: categoryColor,
                           fontWeight: FontWeight.w700,
+                          fontSize: 12,
                         ),
                       ),
                     )
@@ -127,7 +130,7 @@ class HueBoxItem extends StatelessWidget {
                         Icon(
                           CupertinoIcons.check_mark_circled_solid,
                           size: 16,
-                          color: Colors.green.shade500,
+                          color: HueColors.green,
                         ),
                         if (message.acknowledgedText != null &&
                             message.acknowledgedText!.isNotEmpty) ...[
@@ -136,7 +139,7 @@ class HueBoxItem extends StatelessWidget {
                             message.acknowledgedText!,
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
-                                  color: Colors.green.shade700,
+                                  color: HueColors.green,
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
@@ -154,25 +157,39 @@ class HueBoxItem extends StatelessWidget {
 }
 
 class _AckSwipeBackground extends StatelessWidget {
-  const _AckSwipeBackground({required this.color});
+  const _AckSwipeBackground({required this.color, required this.label});
 
   final Color color;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: HueSpacing.md),
+      padding: const EdgeInsets.only(right: HueSpacing.lg),
+      margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(HueRadius.md),
-      ),
-      child: Text(
-        'Hızlı onay',
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.05),
+            color.withValues(alpha: 0.18),
+          ],
         ),
+        borderRadius: BorderRadius.circular(HueRadius.lg),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(CupertinoIcons.check_mark_circled, color: color, size: 20),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -14,78 +14,138 @@ class HueBubble extends StatelessWidget {
     required this.isMe,
     required this.onAcknowledge,
     this.isHighlighted = false,
+    this.hueLabel = 'H Message',
+    this.replyLabel = 'Reply',
   });
 
   final Message message;
   final bool isMe;
   final VoidCallback onAcknowledge;
   final bool isHighlighted;
+  final String hueLabel;
+  final String replyLabel;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final category = message.category!;
+    final color = category.color;
     final acknowledgedText = message.acknowledgedText?.trim();
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.78,
+        ),
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: HueSpacing.xxs),
+          margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(HueSpacing.sm),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(HueRadius.md),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(HueRadius.lg),
             border: Border.all(
               color: isHighlighted
-                  ? Theme.of(context).colorScheme.primary
-                  : category.color,
-              width: isHighlighted ? 4 : 3,
+                  ? const Color(0xFF6366F1)
+                  : color.withValues(alpha: isDark ? 0.5 : 0.35),
+              width: isHighlighted ? 2.5 : 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: isDark ? 0.15 : 0.12),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: isMe
                 ? CrossAxisAlignment.end
                 : CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HueCategoryBadge(category: category, size: 20),
-                  const SizedBox(width: HueSpacing.xxs),
-                  Text(
-                    'H Mesajı',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: category.color,
-                      fontWeight: FontWeight.w700,
-                    ),
+              // ── Hue label ──
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: HueSpacing.xs,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withValues(alpha: 0.15),
+                      color.withValues(alpha: 0.06),
+                    ],
                   ),
-                ],
+                  borderRadius: BorderRadius.circular(HueRadius.pill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    HueCategoryBadge(category: category, size: 18),
+                    const SizedBox(width: 5),
+                    Text(
+                      hueLabel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: HueSpacing.xxs),
+              const SizedBox(height: HueSpacing.xs),
               Text(
                 message.templateText ?? '',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
               ),
-              const SizedBox(height: HueSpacing.xxs),
+              const SizedBox(height: HueSpacing.xs),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     DateFormat('HH:mm').format(message.createdAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: HueColors.textSecondary,
+                      color: HueColors.textSecondary.withValues(alpha: 0.7),
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                   const SizedBox(width: HueSpacing.xs),
                   if (!isMe && message.isUnacked)
                     CupertinoButton(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: HueSpacing.xs,
+                        horizontal: HueSpacing.sm,
+                        vertical: 4,
                       ),
-                      minimumSize: const Size(24, 24),
+                      minimumSize: const Size(24, 26),
                       onPressed: onAcknowledge,
-                      child: const Text('Yanıtla'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: HueSpacing.sm,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(HueRadius.pill),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          replyLabel,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
                     )
                   else if (!isMe &&
                       acknowledgedText != null &&
@@ -96,14 +156,14 @@ class HueBubble extends StatelessWidget {
                         Icon(
                           CupertinoIcons.check_mark_circled_solid,
                           size: 14,
-                          color: Colors.green,
+                          color: HueColors.green,
                         ),
                         const SizedBox(width: HueSpacing.xxs),
                         Text(
                           acknowledgedText,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
-                                color: Colors.green.shade700,
+                                color: HueColors.green,
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -114,8 +174,8 @@ class HueBubble extends StatelessWidget {
                       CupertinoIcons.check_mark_circled_solid,
                       size: 14,
                       color: message.isUnacked
-                          ? HueColors.textSecondary
-                          : Colors.green,
+                          ? HueColors.textSecondary.withValues(alpha: 0.4)
+                          : HueColors.green,
                     ),
                 ],
               ),

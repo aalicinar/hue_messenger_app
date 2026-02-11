@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/app_strings.dart';
+import '../../app/locale_provider.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/mock/mock_repo.dart';
 import '../../core/models/message.dart';
+import '../../shared/widgets/hue_avatar.dart';
 import '../../shared/widgets/hue_backdrop.dart';
 import 'chat_detail_controller.dart';
 import 'widgets/composer.dart';
@@ -38,11 +41,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       chatDetailControllerProvider(widget.chatId).notifier,
     );
     final repository = ref.read(mockRepositoryProvider);
+    final lang = ref.watch(localeProvider);
 
     _maybeScrollToInitial(state.messages);
 
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(middle: Text(state.title)),
+      navigationBar: CupertinoNavigationBar(
+        middle: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            HueAvatar(name: state.title, size: 28, showBorder: false),
+            const SizedBox(width: HueSpacing.xs),
+            Flexible(child: Text(state.title, overflow: TextOverflow.ellipsis)),
+          ],
+        ),
+      ),
       child: HueBackdrop(
         child: SafeArea(
           child: Column(
@@ -50,10 +63,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               Expanded(
                 child: state.messages.isEmpty
                     ? Center(
-                        child: Text(
-                          'Henüz mesaj yok.',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: HueColors.textSecondary),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              CupertinoIcons.chat_bubble,
+                              size: 40,
+                              color: HueColors.textSecondary.withValues(
+                                alpha: 0.3,
+                              ),
+                            ),
+                            const SizedBox(height: HueSpacing.sm),
+                            Text(
+                              S.get(lang, 'chat_empty'),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: HueColors.textSecondary),
+                            ),
+                          ],
                         ),
                       )
                     : ListView.builder(
@@ -72,6 +98,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                                   message.id == widget.initialMessageId,
                               onAcknowledge: () => _onAcknowledgeHue(
                                 context: context,
+                                lang: lang,
                                 controller: controller,
                                 messageId: message.id,
                                 replyOptions: state.ackReplies,
@@ -82,12 +109,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       ),
               ),
               ChatComposer(
+                placeholder: S.get(lang, 'chat_composer_placeholder'),
                 onSend: (text) {
                   HapticFeedback.selectionClick();
                   controller.sendNormalMessage(text);
                 },
                 onOpenHue: () => _openHueSheet(
                   context: context,
+                  lang: lang,
                   controller: controller,
                   repository: repository,
                 ),
@@ -111,6 +140,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         isMe: isMe,
         isHighlighted: isHighlighted,
         onAcknowledge: onAcknowledge,
+        hueLabel: S.get(ref.read(localeProvider), 'hue_label'),
+        replyLabel: S.get(ref.read(localeProvider), 'hue_box_reply'),
       );
     }
 
@@ -154,6 +185,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _openHueSheet({
     required BuildContext context,
+    required AppLanguage lang,
     required ChatDetailController controller,
     required MockRepository repository,
   }) async {
@@ -163,6 +195,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       builder: (sheetContext) {
         return HueSheet(
           templates: templates,
+          title: S.get(lang, 'hue_sheet_title'),
+          allLabel: S.get(lang, 'filter_all'),
+          emptyLabel: S.get(lang, 'hue_sheet_empty'),
           onTemplateSelected: (template) async {
             Navigator.of(sheetContext).pop();
             HapticFeedback.selectionClick();
@@ -170,6 +205,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             if (!result.sent) {
               await _showRateLimitBlockedDialog(
                 context: context,
+                lang: lang,
                 retryAfter: result.retryAfter,
               );
             }
@@ -181,12 +217,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _onAcknowledgeHue({
     required BuildContext context,
+    required AppLanguage lang,
     required ChatDetailController controller,
     required String messageId,
     required List<String> replyOptions,
   }) async {
     final selectedReply = await _showAckReplyPicker(
       context: context,
+      lang: lang,
       replyOptions: replyOptions,
     );
     if (!mounted || selectedReply == null) return;
@@ -197,17 +235,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<String?> _showAckReplyPicker({
     required BuildContext context,
+    required AppLanguage lang,
     required List<String> replyOptions,
   }) async {
     final options = replyOptions.isEmpty
-        ? const <String>['Tamam', 'Evet', 'Hayır']
+        ? const <String>['OK', 'Yes', 'No']
         : replyOptions;
     return showCupertinoModalPopup<String>(
       context: context,
       builder: (sheetContext) {
         return CupertinoActionSheet(
-          title: const Text('Hızlı Yanıt'),
-          message: const Text('Onay için bir yanıt seç.'),
+          title: Text(S.get(lang, 'hue_box_reply_title')),
+          message: Text(S.get(lang, 'hue_box_reply_message')),
           actions: [
             for (final option in options)
               CupertinoActionSheetAction(
@@ -218,7 +257,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           cancelButton: CupertinoActionSheetAction(
             onPressed: () => Navigator.of(sheetContext).pop(),
             isDefaultAction: true,
-            child: const Text('Vazgeç'),
+            child: Text(S.get(lang, 'cancel')),
           ),
         );
       },
@@ -227,6 +266,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _showRateLimitBlockedDialog({
     required BuildContext context,
+    required AppLanguage lang,
     required Duration retryAfter,
   }) async {
     final waitText = _formatWait(retryAfter);
@@ -234,9 +274,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return CupertinoAlertDialog(
-          title: const Text('Gönderim Sınırı Aktif'),
+          title: Text(S.get(lang, 'chat_rate_limit_title')),
           content: Text(
-            'Seçili H kategorisinde geçici sınır var. $waitText sonra tekrar dene.',
+            S.get(lang, 'chat_rate_limit_body').replaceAll('{t}', waitText),
           ),
           actions: [
             CupertinoDialogAction(

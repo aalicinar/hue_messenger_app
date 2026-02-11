@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'theme_preset.dart';
 import 'tokens.dart';
@@ -7,76 +8,84 @@ import 'tokens.dart';
 class HueTheme {
   const HueTheme._();
 
-  static const List<String> _iosFirstFonts = [
-    '.SF Pro Text',
-    '.SF UI Text',
-    'SF Pro Text',
-    'Helvetica Neue',
-    'Arial',
-  ];
+  static TextTheme _buildTextTheme(Brightness brightness) {
+    final base = GoogleFonts.interTextTheme(
+      brightness == Brightness.light
+          ? ThemeData.light().textTheme
+          : ThemeData.dark().textTheme,
+    );
+    return base.copyWith(
+      displaySmall: base.displaySmall?.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+        height: 1.06,
+      ),
+      headlineSmall: base.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.3,
+      ),
+      titleLarge: base.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+      ),
+      titleMedium: base.titleMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.15,
+      ),
+      titleSmall: base.titleSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.08,
+      ),
+      bodyLarge: base.bodyLarge?.copyWith(height: 1.5, letterSpacing: -0.02),
+      bodyMedium: base.bodyMedium?.copyWith(height: 1.4, letterSpacing: -0.04),
+      bodySmall: base.bodySmall?.copyWith(height: 1.33, letterSpacing: 0.02),
+      labelLarge: base.labelLarge?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.02,
+      ),
+      labelMedium: base.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+    );
+  }
 
   static ThemeData light({required HueThemePreset preset}) {
     final seed = _seedColorFor(preset);
     final colorScheme = ColorScheme.fromSeed(
       seedColor: seed,
       brightness: Brightness.light,
+      surface: const Color(0xFFFCFCFE),
+      onSurface: HueColors.textPrimary,
     );
+    final textTheme = _buildTextTheme(Brightness.light);
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: _scaffoldLightFor(preset),
       dividerColor: HueColors.separator,
-      textTheme: const TextTheme(
-        displaySmall: TextStyle(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.45,
-          height: 1.06,
-          fontFamilyFallback: _iosFirstFonts,
+      textTheme: textTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: textTheme.titleMedium?.copyWith(
+          color: HueColors.textPrimary,
+          fontSize: 17,
         ),
-        headlineSmall: TextStyle(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.2,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        titleMedium: TextStyle(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.15,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        titleSmall: TextStyle(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.08,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        bodyMedium: TextStyle(
-          height: 1.36,
-          letterSpacing: -0.04,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        bodySmall: TextStyle(height: 1.33, fontFamilyFallback: _iosFirstFonts),
       ),
       cupertinoOverrideTheme: CupertinoThemeData(
         primaryColor: colorScheme.primary,
-        barBackgroundColor: Colors.white.withValues(alpha: 0.78),
+        barBackgroundColor: Colors.white.withValues(alpha: 0.72),
         textTheme: CupertinoTextThemeData(
-          textStyle: const TextStyle(
-            inherit: false,
-            fontFamilyFallback: _iosFirstFonts,
-          ),
-          navTitleTextStyle: const TextStyle(
-            inherit: false,
+          textStyle: textTheme.bodyMedium ?? const TextStyle(),
+          navTitleTextStyle: textTheme.titleMedium?.copyWith(
             fontSize: 17,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
-            fontFamilyFallback: _iosFirstFonts,
           ),
-          navLargeTitleTextStyle: const TextStyle(
-            inherit: false,
+          navLargeTitleTextStyle: textTheme.displaySmall?.copyWith(
             fontSize: 32,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.6,
-            fontFamilyFallback: _iosFirstFonts,
           ),
         ),
       ),
@@ -89,63 +98,40 @@ class HueTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: seed,
       brightness: Brightness.dark,
+      surface: const Color(0xFF161B24),
+      onSurface: Colors.white,
     );
+    final textTheme = _buildTextTheme(Brightness.dark);
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: _scaffoldDarkFor(preset),
-      dividerColor: HueColors.separator.withValues(alpha: 0.35),
-      textTheme: const TextTheme(
-        displaySmall: TextStyle(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.45,
-          height: 1.06,
-          fontFamilyFallback: _iosFirstFonts,
+      dividerColor: HueColors.separator.withValues(alpha: 0.18),
+      textTheme: textTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: textTheme.titleMedium?.copyWith(
+          color: Colors.white,
+          fontSize: 17,
         ),
-        headlineSmall: TextStyle(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.2,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        titleMedium: TextStyle(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.15,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        titleSmall: TextStyle(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.08,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        bodyMedium: TextStyle(
-          height: 1.36,
-          letterSpacing: -0.04,
-          fontFamilyFallback: _iosFirstFonts,
-        ),
-        bodySmall: TextStyle(height: 1.33, fontFamilyFallback: _iosFirstFonts),
       ),
       cupertinoOverrideTheme: CupertinoThemeData(
         primaryColor: colorScheme.primary,
-        barBackgroundColor: const Color(0xFF0F1624).withValues(alpha: 0.76),
+        barBackgroundColor: const Color(0xFF0C0F14).withValues(alpha: 0.78),
         textTheme: CupertinoTextThemeData(
-          textStyle: const TextStyle(
-            inherit: false,
-            fontFamilyFallback: _iosFirstFonts,
-          ),
-          navTitleTextStyle: const TextStyle(
-            inherit: false,
+          textStyle: textTheme.bodyMedium ?? const TextStyle(),
+          navTitleTextStyle: textTheme.titleMedium?.copyWith(
             fontSize: 17,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
-            fontFamilyFallback: _iosFirstFonts,
           ),
-          navLargeTitleTextStyle: const TextStyle(
-            inherit: false,
+          navLargeTitleTextStyle: textTheme.displaySmall?.copyWith(
             fontSize: 32,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.6,
-            fontFamilyFallback: _iosFirstFonts,
           ),
         ),
       ),
@@ -156,22 +142,22 @@ class HueTheme {
   static Color _seedColorFor(HueThemePreset preset) {
     switch (preset) {
       case HueThemePreset.minimal:
-        return HueColors.blue;
+        return const Color(0xFF6366F1);
       case HueThemePreset.glassy:
-        return const Color(0xFF31A0FF);
+        return const Color(0xFF8B5CF6);
       case HueThemePreset.highContrast:
-        return const Color(0xFF0059FF);
+        return const Color(0xFF3B82F6);
     }
   }
 
   static Color _scaffoldLightFor(HueThemePreset preset) {
     switch (preset) {
       case HueThemePreset.minimal:
-        return const Color(0xFFF7F8FA);
+        return const Color(0xFFF8F9FB);
       case HueThemePreset.glassy:
-        return const Color(0xFFF3F7FF);
+        return const Color(0xFFF5F3FF);
       case HueThemePreset.highContrast:
-        return const Color(0xFFF1F4FA);
+        return const Color(0xFFF0F4FF);
     }
   }
 
@@ -180,9 +166,9 @@ class HueTheme {
       case HueThemePreset.minimal:
         return HueColors.neutralBackgroundDark;
       case HueThemePreset.glassy:
-        return const Color(0xFF111827);
+        return const Color(0xFF0A0D14);
       case HueThemePreset.highContrast:
-        return const Color(0xFF0A0D12);
+        return const Color(0xFF070A0F);
     }
   }
 }

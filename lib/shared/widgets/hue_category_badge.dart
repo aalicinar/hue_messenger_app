@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme/tokens.dart';
 import '../../core/models/hue_category.dart';
 
 class HueCategoryBadge extends StatelessWidget {
@@ -19,34 +18,47 @@ class HueCategoryBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = category.color;
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(HueRadius.sm),
+        borderRadius: BorderRadius.circular(size * 0.28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color, Color.lerp(color, Colors.white, 0.2) ?? color],
+        ),
         border: Border.all(
           color: isSelected
               ? Colors.white.withValues(alpha: 0.95)
-              : Colors.white.withValues(alpha: 0.35),
-          width: isSelected ? 2 : 1,
+              : Colors.white.withValues(alpha: 0.4),
+          width: isSelected ? 2.2 : 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: isSelected ? 0.35 : 0.22),
-            blurRadius: isSelected ? 12 : 8,
-            offset: const Offset(0, 4),
+            color: color.withValues(alpha: isSelected ? 0.45 : 0.25),
+            blurRadius: isSelected ? 14 : 8,
+            spreadRadius: isSelected ? 1 : 0,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          'H',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontStyle: FontStyle.italic,
-            letterSpacing: -0.3,
+      child: AnimatedScale(
+        scale: isSelected ? 1.08 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutBack,
+        child: Center(
+          child: Text(
+            'H',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontStyle: FontStyle.italic,
+              letterSpacing: -0.3,
+              fontSize: size * 0.42,
+              height: 1,
+            ),
           ),
         ),
       ),

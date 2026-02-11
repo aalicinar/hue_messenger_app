@@ -1,7 +1,8 @@
-import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../app/theme/tokens.dart';
 import '../../../core/models/hue_category.dart';
@@ -13,135 +14,211 @@ class HueSheet extends StatefulWidget {
     super.key,
     required this.templates,
     required this.onTemplateSelected,
+    this.title = 'Select H Template',
+    this.allLabel = 'All',
+    this.emptyLabel = 'No templates in this category.',
   });
 
   final List<Template> templates;
   final ValueChanged<Template> onTemplateSelected;
+  final String title;
+  final String allLabel;
+  final String emptyLabel;
 
   @override
   State<HueSheet> createState() => _HueSheetState();
 }
 
 class _HueSheetState extends State<HueSheet> {
-  HueCategory _selected = HueCategory.red;
+  HueCategory? _selectedCategory;
+
+  List<Template> get _filteredTemplates {
+    if (_selectedCategory == null) return widget.templates;
+    return widget.templates
+        .where((template) => template.category == _selectedCategory)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final all =
-        widget.templates.where((template) => !template.isHidden).toList()
-          ..sort((a, b) => a.order.compareTo(b.order));
-    final filtered = all
-        .where((template) => template.category == _selected)
-        .toList();
-    final maxHeight = math.min(
-      MediaQuery.of(context).size.height * 0.82,
-      620.0,
-    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final height = MediaQuery.of(context).size.height * 0.55;
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: maxHeight,
-        padding: const EdgeInsets.fromLTRB(
-          HueSpacing.md,
-          HueSpacing.sm,
-          HueSpacing.md,
-          HueSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFF7FAFF), Color(0xFFF2F7FF), Color(0xFFEEF5FF)],
-          ),
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(HueRadius.lg),
-          ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.82)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: HueColors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(HueRadius.pill),
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(HueRadius.xl),
+        topRight: Radius.circular(HueRadius.xl),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 36, sigmaY: 36),
+        child: Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF0C0F14).withValues(alpha: 0.88)
+                : Colors.white.withValues(alpha: 0.82),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(HueRadius.xl),
+              topRight: Radius.circular(HueRadius.xl),
+            ),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                width: 1.5,
               ),
             ),
-            const SizedBox(height: HueSpacing.sm),
-            Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
+          ),
+          child: Column(
+            children: [
+              // ── Drag handle ──
+              Padding(
+                padding: const EdgeInsets.only(top: HueSpacing.sm),
+                child: Container(
+                  width: 40,
+                  height: 5,
                   decoration: BoxDecoration(
-                    color: _selected.color.withValues(alpha: 0.14),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(HueRadius.pill),
                   ),
-                  child: Icon(
-                    CupertinoIcons.sparkles,
-                    color: _selected.color,
-                    size: 18,
-                  ),
                 ),
-                const SizedBox(width: HueSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'H Mesajı Gönder',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: HueSpacing.xxs),
-                      Text(
-                        'Bir şablona dokun, anında gönder',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: HueColors.textSecondary,
-                        ),
-                      ),
-                    ],
+              ),
+              const SizedBox(height: HueSpacing.sm),
+              // ── Title ──
+              Text(
+                widget.title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: HueSpacing.sm),
+              // ── Category picker ──
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: HueSpacing.md,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: HueSpacing.sm),
-            Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Bu kategoride şablon yok.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: HueColors.textSecondary,
-                        ),
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: HueSpacing.xs),
-                      itemBuilder: (context, index) {
-                        final template = filtered[index];
-                        return _TemplateCard(
-                          template: template,
-                          onTap: () => widget.onTemplateSelected(template),
-                        );
-                      },
+                  children: [
+                    _CategoryChip(
+                      label: widget.allLabel,
+                      isSelected: _selectedCategory == null,
+                      onTap: () => setState(() => _selectedCategory = null),
                     ),
-            ),
-            const SizedBox(height: HueSpacing.xs),
-            _CategoryPicker(
-              selected: _selected,
-              onChanged: (category) {
-                setState(() {
-                  _selected = category;
-                });
-              },
-            ),
-          ],
+                    const SizedBox(width: HueSpacing.xs),
+                    for (final category in HueCategory.values) ...[
+                      _CategoryChip(
+                        category: category,
+                        isSelected: _selectedCategory == category,
+                        onTap: () =>
+                            setState(() => _selectedCategory = category),
+                      ),
+                      const SizedBox(width: HueSpacing.xs),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: HueSpacing.sm),
+              // ── Templates list ──
+              Expanded(
+                child: _filteredTemplates.isEmpty
+                    ? Center(
+                        child: Text(
+                          widget.emptyLabel,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: HueColors.textSecondary),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: HueSpacing.md,
+                        ),
+                        itemCount: _filteredTemplates.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: HueSpacing.xs),
+                        itemBuilder: (context, index) {
+                          final template = _filteredTemplates[index];
+                          return _TemplateCard(
+                                template: template,
+                                onTap: () =>
+                                    widget.onTemplateSelected(template),
+                              )
+                              .animate()
+                              .fadeIn(duration: 300.ms, delay: (50 * index).ms)
+                              .slideY(
+                                begin: 0.08,
+                                end: 0,
+                                duration: 300.ms,
+                                delay: (50 * index).ms,
+                                curve: Curves.easeOutCubic,
+                              );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    this.label,
+    this.category,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String? label;
+  final HueCategory? category;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = category?.color ?? const Color(0xFF6366F1);
+
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(
+          horizontal: HueSpacing.sm,
+          vertical: HueSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(colors: [color, color.withValues(alpha: 0.8)])
+              : null,
+          color: isSelected ? null : color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(HueRadius.pill),
+          border: Border.all(
+            color: isSelected
+                ? Colors.transparent
+                : color.withValues(alpha: 0.2),
+          ),
+        ),
+        child: label != null
+            ? Text(
+                label!,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : color,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              )
+            : HueCategoryBadge(
+                category: category!,
+                size: 22,
+                isSelected: isSelected,
+              ),
       ),
     );
   }
@@ -155,6 +232,9 @@ class _TemplateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = template.category.color;
+
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onTap,
@@ -162,15 +242,18 @@ class _TemplateCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(HueSpacing.sm),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.white.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(HueRadius.md),
           border: Border.all(
-            color: template.category.color.withValues(alpha: 0.42),
-            width: 1.2,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : color.withValues(alpha: 0.12),
           ),
           boxShadow: [
             BoxShadow(
-              color: template.category.color.withValues(alpha: 0.12),
+              color: color.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -178,14 +261,7 @@ class _TemplateCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(HueSpacing.xxs),
-              decoration: BoxDecoration(
-                color: template.category.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(HueRadius.sm),
-              ),
-              child: HueCategoryBadge(category: template.category, size: 26),
-            ),
+            HueCategoryBadge(category: template.category, size: 30),
             const SizedBox(width: HueSpacing.sm),
             Expanded(
               child: Column(
@@ -193,98 +269,29 @@ class _TemplateCard extends StatelessWidget {
                 children: [
                   Text(
                     template.text,
-                    textAlign: TextAlign.left,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: HueSpacing.xxs),
+                  const SizedBox(height: 3),
                   Text(
-                    'Göndermek için dokun',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: HueColors.textSecondary,
+                    template.category.label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: HueSpacing.sm),
             Icon(
-              CupertinoIcons.arrow_up_circle_fill,
-              color: template.category.color,
+              CupertinoIcons.chevron_right,
+              size: 14,
+              color: HueColors.textSecondary.withValues(alpha: 0.4),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryPicker extends StatelessWidget {
-  const _CategoryPicker({required this.selected, required this.onChanged});
-
-  final HueCategory selected;
-  final ValueChanged<HueCategory> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final category in HueCategory.values) ...[
-            _CategoryChip(
-              category: category,
-              isSelected: selected == category,
-              onTap: () => onChanged(category),
-            ),
-            if (category != HueCategory.values.last)
-              const SizedBox(width: HueSpacing.xs),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.category,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final HueCategory category;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      minimumSize: const Size(58, 44),
-      onPressed: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(
-          horizontal: HueSpacing.sm,
-          vertical: HueSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? category.color.withValues(alpha: 0.2)
-              : category.color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(HueRadius.pill),
-          border: Border.all(
-            color: isSelected
-                ? category.color
-                : category.color.withValues(alpha: 0.28),
-          ),
-        ),
-        child: HueCategoryBadge(
-          category: category,
-          size: 26,
-          isSelected: isSelected,
         ),
       ),
     );

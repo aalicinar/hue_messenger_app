@@ -11,10 +11,12 @@ class HueBoxFilterControl extends StatelessWidget {
     super.key,
     required this.selectedFilter,
     required this.onChanged,
+    this.allLabel = 'All',
   });
 
   final HueBoxFilter selectedFilter;
   final ValueChanged<HueBoxFilter> onChanged;
+  final String allLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,7 @@ class HueBoxFilterControl extends StatelessWidget {
               filter: filter,
               isSelected: selectedFilter == filter,
               onTap: () => onChanged(filter),
+              allLabel: allLabel,
             ),
             if (filter != HueBoxFilter.values.last)
               const SizedBox(width: HueSpacing.xs),
@@ -42,53 +45,65 @@ class _FilterChip extends StatelessWidget {
     required this.filter,
     required this.isSelected,
     required this.onTap,
+    required this.allLabel,
   });
 
   final HueBoxFilter filter;
   final bool isSelected;
   final VoidCallback onTap;
+  final String allLabel;
 
   @override
   Widget build(BuildContext context) {
     final isAll = filter == HueBoxFilter.all;
-    final color = filter == HueBoxFilter.all
-        ? Theme.of(context).colorScheme.primary
-        : filter.category!.color;
+    final color = isAll ? const Color(0xFF6366F1) : filter.category!.color;
 
     return CupertinoButton(
       padding: EdgeInsets.zero,
       minimumSize: const Size(72, 38),
       onPressed: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(
-          horizontal: HueSpacing.sm,
+          horizontal: HueSpacing.sm + 2,
           vertical: HueSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: isAll
-              ? (isSelected ? color : color.withValues(alpha: 0.12))
-              : (isSelected
-                    ? color.withValues(alpha: 0.18)
-                    : color.withValues(alpha: 0.08)),
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: isAll
+                      ? [color, color.withValues(alpha: 0.85)]
+                      : [
+                          color.withValues(alpha: 0.2),
+                          color.withValues(alpha: 0.12),
+                        ],
+                )
+              : null,
+          color: isSelected ? null : color.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(HueRadius.pill),
           border: Border.all(
             color: isSelected
-                ? color
-                : color.withValues(alpha: isAll ? 0.35 : 0.26),
+                ? color.withValues(alpha: isAll ? 1.0 : 0.6)
+                : color.withValues(alpha: 0.15),
+            width: isSelected ? 1.5 : 1,
           ),
+          boxShadow: isSelected
+              ? HueShadows.glowFor(color, intensity: 0.15)
+              : null,
         ),
         child: isAll
             ? Text(
-                filter.label,
+                filter == HueBoxFilter.all ? allLabel : filter.label,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: isSelected ? Colors.white : color,
                   fontWeight: FontWeight.w700,
+                  fontSize: 13,
                 ),
               )
             : HueCategoryBadge(
                 category: filter.category!,
-                size: 26,
+                size: 24,
                 isSelected: isSelected,
               ),
       ),

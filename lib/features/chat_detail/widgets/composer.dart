@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -8,121 +10,182 @@ class ChatComposer extends StatefulWidget {
     super.key,
     required this.onSend,
     required this.onOpenHue,
+    this.placeholder = 'Type a message...',
   });
 
   final ValueChanged<String> onSend;
   final VoidCallback onOpenHue;
+  final String placeholder;
 
   @override
   State<ChatComposer> createState() => _ChatComposerState();
 }
 
 class _ChatComposerState extends State<ChatComposer> {
-  final TextEditingController _controller = TextEditingController();
-  bool _canSend = false;
+  final _controller = TextEditingController();
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+  }
 
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     super.dispose();
   }
 
+  void _onTextChanged() {
+    final hasText = _controller.text.trim().isNotEmpty;
+    if (_hasText != hasText) {
+      setState(() => _hasText = hasText);
+    }
+  }
+
+  void _send() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    widget.onSend(text);
+    _controller.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(
-          HueSpacing.sm,
-          HueSpacing.xs,
-          HueSpacing.sm,
-          HueSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
-          border: Border(
-            top: BorderSide(color: HueColors.separator.withValues(alpha: 0.65)),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(
+            HueSpacing.sm,
+            HueSpacing.xs,
+            HueSpacing.sm,
+            HueSpacing.xs,
           ),
-        ),
-        child: Row(
-          children: [
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(44, 44),
-              onPressed: widget.onOpenHue,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: HueColors.blue.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(HueRadius.pill),
-                ),
-                child: const Icon(
-                  CupertinoIcons.paintbrush,
-                  color: HueColors.blue,
-                  size: 20,
-                ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF0C0F14).withValues(alpha: 0.82)
+                : Colors.white.withValues(alpha: 0.78),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.04),
               ),
             ),
-            const SizedBox(width: HueSpacing.xs),
-            Expanded(
-              child: CupertinoTextField(
-                controller: _controller,
-                placeholder: 'Message',
-                padding: const EdgeInsets.symmetric(
-                  horizontal: HueSpacing.sm,
-                  vertical: HueSpacing.sm,
+          ),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                // ── Hue button ──
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: widget.onOpenHue,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: HueColors.accentGradient,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF6366F1,
+                          ).withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'H',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 16,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(HueRadius.pill),
-                  border: Border.all(color: HueColors.separator),
+                const SizedBox(width: HueSpacing.xs),
+                // ── Text field ──
+                Expanded(
+                  child: CupertinoTextField(
+                    controller: _controller,
+                    placeholder: widget.placeholder,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: HueSpacing.sm,
+                      vertical: HueSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(HueRadius.pill),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.06),
+                      ),
+                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    placeholderStyle: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: HueColors.textSecondary),
+                    onSubmitted: (_) => _send(),
+                  ),
                 ),
-                onChanged: (value) {
-                  final next = value.trim().isNotEmpty;
-                  if (_canSend == next) return;
-                  setState(() {
-                    _canSend = next;
-                  });
-                },
-                onSubmitted: _send,
-              ),
+                const SizedBox(width: HueSpacing.xs),
+                // ── Send button ──
+                AnimatedScale(
+                  scale: _hasText ? 1.0 : 0.85,
+                  duration: const Duration(milliseconds: 180),
+                  child: AnimatedOpacity(
+                    opacity: _hasText ? 1.0 : 0.45,
+                    duration: const Duration(milliseconds: 180),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: _send,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: _hasText
+                              ? const LinearGradient(
+                                  colors: HueColors.accentGradient,
+                                )
+                              : null,
+                          color: _hasText
+                              ? null
+                              : HueColors.textSecondary.withValues(alpha: 0.15),
+                        ),
+                        child: Icon(
+                          CupertinoIcons.arrow_up,
+                          size: 18,
+                          color: _hasText
+                              ? Colors.white
+                              : HueColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: HueSpacing.xs),
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(44, 44),
-              onPressed: _canSend ? () => _send(_controller.text) : null,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _canSend
-                      ? HueColors.blue
-                      : HueColors.textSecondary.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(HueRadius.pill),
-                ),
-                child: const Icon(
-                  CupertinoIcons.arrow_up,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
-  }
-
-  void _send(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
-    widget.onSend(trimmed);
-    _controller.clear();
-    if (!_canSend) return;
-    setState(() {
-      _canSend = false;
-    });
   }
 }
