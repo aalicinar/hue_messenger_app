@@ -33,167 +33,209 @@ class HueBoxScreen extends ConsumerWidget {
         middle: Text(S.get(lang, 'hue_box_title')),
       ),
       child: HueBackdrop(
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              HueSpacing.md,
-              HueSpacing.md,
-              HueSpacing.md,
-              0,
-            ),
-            child: Column(
-              children: [
-                HueGlassCard(
-                  child: Row(
-                    children: [
-                      const HueLogo(size: 42),
-                      const SizedBox(width: HueSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              S.get(lang, 'hue_box_header'),
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w800),
-                            ),
-                            const SizedBox(height: 2),
-                            Row(
+        child: Stack(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  HueSpacing.md,
+                  HueSpacing.md,
+                  HueSpacing.md,
+                  0,
+                ),
+                child: Column(
+                  children: [
+                    HueGlassCard(
+                      child: Row(
+                        children: [
+                          const HueLogo(size: 42),
+                          const SizedBox(width: HueSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (unackedCount > 0) ...[
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: HueColors.red,
-                                      boxShadow: HueShadows.glowFor(
-                                        HueColors.red,
-                                        intensity: 0.4,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                ],
                                 Text(
-                                  S
-                                      .get(lang, 'hue_box_pending')
-                                      .replaceAll('{n}', '$unackedCount'),
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: HueColors.textSecondary,
+                                  S.get(lang, 'hue_box_header'),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    if (unackedCount > 0) ...[
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: HueColors.red,
+                                          boxShadow: HueShadows.glowFor(
+                                            HueColors.red,
+                                            intensity: 0.4,
+                                          ),
+                                        ),
                                       ),
+                                      const SizedBox(width: 6),
+                                    ],
+                                    Text(
+                                      S
+                                          .get(lang, 'hue_box_pending')
+                                          .replaceAll('{n}', '$unackedCount'),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: HueColors.textSecondary,
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: HueSpacing.sm),
+                    HueGlassCard(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: HueSpacing.sm,
+                        vertical: HueSpacing.xs,
+                      ),
+                      child: HueBoxFilterControl(
+                        selectedFilter: state.selectedFilter,
+                        allLabel: S.get(lang, 'filter_all'),
+                        onChanged: (filter) {
+                          HapticFeedback.selectionClick();
+                          controller.setFilter(filter);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: HueSpacing.sm),
+                    Expanded(
+                      child: state.filteredMessages.isEmpty
+                          ? HueBoxEmptyState(
+                              filter: state.selectedFilter,
+                              lang: lang,
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.only(
+                                bottom: HueSpacing.xxl + HueSpacing.xl,
+                              ),
+                              itemCount: state.filteredMessages.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: HueSpacing.xs),
+                              itemBuilder: (context, index) {
+                                final message = state.filteredMessages[index];
+                                return HueBoxItem(
+                                      message: message,
+                                      senderName: _senderName(
+                                        ref,
+                                        message.senderId,
+                                      ),
+                                      replyLabel: S.get(lang, 'hue_box_reply'),
+                                      quickAckLabel: S.get(
+                                        lang,
+                                        'hue_box_quick_ack',
+                                      ),
+                                      onTap: () => _openChatDetail(
+                                        context: context,
+                                        chatId: message.chatId,
+                                        messageId: message.id,
+                                      ),
+                                      onAcknowledge: () => _showReplyPicker(
+                                        context: context,
+                                        lang: lang,
+                                        replyOptions: state.ackReplies,
+                                        onSelected: (reply) {
+                                          HapticFeedback.mediumImpact();
+                                          controller.acknowledge(
+                                            message.id,
+                                            replyText: reply,
+                                          );
+                                        },
+                                      ),
+                                      onAcknowledgeSwipe: () {
+                                        HapticFeedback.mediumImpact();
+                                        controller.acknowledge(
+                                          message.id,
+                                          replyText: _defaultReply(
+                                            state.ackReplies,
+                                          ),
+                                        );
+                                      },
+                                      onLongPress: message.isUnacked
+                                          ? () => _showReplyPicker(
+                                              context: context,
+                                              lang: lang,
+                                              replyOptions: state.ackReplies,
+                                              onSelected: (reply) {
+                                                HapticFeedback.mediumImpact();
+                                                controller.acknowledge(
+                                                  message.id,
+                                                  replyText: reply,
+                                                );
+                                              },
+                                            )
+                                          : null,
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      duration: 350.ms,
+                                      delay: (60 * index).ms,
+                                    )
+                                    .slideX(
+                                      begin: 0.06,
+                                      end: 0,
+                                      duration: 350.ms,
+                                      delay: (60 * index).ms,
+                                      curve: Curves.easeOutCubic,
+                                    );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── FAB: New message ──
+            Positioned(
+              right: HueSpacing.md,
+              bottom: HueSpacing.xxl + HueSpacing.lg,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  _showNewMessageDialog(context, lang);
+                },
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: HueColors.accentGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: HueSpacing.sm),
-                HueGlassCard(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: HueSpacing.sm,
-                    vertical: HueSpacing.xs,
-                  ),
-                  child: HueBoxFilterControl(
-                    selectedFilter: state.selectedFilter,
-                    allLabel: S.get(lang, 'filter_all'),
-                    onChanged: (filter) {
-                      HapticFeedback.selectionClick();
-                      controller.setFilter(filter);
-                    },
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(height: HueSpacing.sm),
-                Expanded(
-                  child: state.filteredMessages.isEmpty
-                      ? HueBoxEmptyState(
-                          filter: state.selectedFilter,
-                          lang: lang,
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.only(
-                            bottom: HueSpacing.xxl + HueSpacing.xl,
-                          ),
-                          itemCount: state.filteredMessages.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: HueSpacing.xs),
-                          itemBuilder: (context, index) {
-                            final message = state.filteredMessages[index];
-                            return HueBoxItem(
-                                  message: message,
-                                  senderName: _senderName(
-                                    ref,
-                                    message.senderId,
-                                  ),
-                                  replyLabel: S.get(lang, 'hue_box_reply'),
-                                  quickAckLabel: S.get(
-                                    lang,
-                                    'hue_box_quick_ack',
-                                  ),
-                                  onTap: () => _openChatDetail(
-                                    context: context,
-                                    chatId: message.chatId,
-                                    messageId: message.id,
-                                  ),
-                                  onAcknowledge: () => _showReplyPicker(
-                                    context: context,
-                                    lang: lang,
-                                    replyOptions: state.ackReplies,
-                                    onSelected: (reply) {
-                                      HapticFeedback.mediumImpact();
-                                      controller.acknowledge(
-                                        message.id,
-                                        replyText: reply,
-                                      );
-                                    },
-                                  ),
-                                  onAcknowledgeSwipe: () {
-                                    HapticFeedback.mediumImpact();
-                                    controller.acknowledge(
-                                      message.id,
-                                      replyText: _defaultReply(
-                                        state.ackReplies,
-                                      ),
-                                    );
-                                  },
-                                  onLongPress: message.isUnacked
-                                      ? () => _showReplyPicker(
-                                          context: context,
-                                          lang: lang,
-                                          replyOptions: state.ackReplies,
-                                          onSelected: (reply) {
-                                            HapticFeedback.mediumImpact();
-                                            controller.acknowledge(
-                                              message.id,
-                                              replyText: reply,
-                                            );
-                                          },
-                                        )
-                                      : null,
-                                )
-                                .animate()
-                                .fadeIn(
-                                  duration: 350.ms,
-                                  delay: (60 * index).ms,
-                                )
-                                .slideX(
-                                  begin: 0.06,
-                                  end: 0,
-                                  duration: 350.ms,
-                                  delay: (60 * index).ms,
-                                  curve: Curves.easeOutCubic,
-                                );
-                          },
-                        ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -255,5 +297,51 @@ class HueBoxScreen extends ConsumerWidget {
   String _defaultReply(List<String> replies) {
     if (replies.isEmpty) return 'OK';
     return replies.first;
+  }
+
+  Future<void> _showNewMessageDialog(
+    BuildContext context,
+    AppLanguage lang,
+  ) async {
+    final repository = ProviderScope.containerOf(
+      context,
+    ).read(mockRepositoryProvider);
+    final currentUser = repository.getCurrentUser();
+    final contacts = repository
+        .getUsers()
+        .where((u) => u.id != currentUser.id)
+        .toList();
+
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) {
+        return CupertinoActionSheet(
+          title: Text(S.get(lang, 'chats_new_title')),
+          actions: [
+            for (final contact in contacts)
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  final chat = repository.createOrGetChat(
+                    currentUserId: currentUser.id,
+                    otherUserId: contact.id,
+                  );
+                  _openChatDetail(
+                    context: context,
+                    chatId: chat.id,
+                    messageId: '',
+                  );
+                },
+                child: Text(contact.name),
+              ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(ctx).pop(),
+            isDefaultAction: true,
+            child: Text(S.get(lang, 'cancel')),
+          ),
+        );
+      },
+    );
   }
 }

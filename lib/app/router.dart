@@ -9,14 +9,34 @@ import 'theme/tokens.dart';
 import '../features/chats/chats_screen.dart';
 import '../features/hue_box/hue_box_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/splash/splash_screen.dart';
+import '../features/auth/login_screen.dart';
 
 class HueRouter {
   const HueRouter._();
 
+  static const splash = '/splash';
+  static const login = '/login';
   static const root = '/';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case splash:
+        return PageRouteBuilder<void>(
+          settings: settings,
+          pageBuilder: (_, __, ___) => const SplashScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 400),
+        );
+      case login:
+        return PageRouteBuilder<void>(
+          settings: settings,
+          pageBuilder: (_, __, ___) => const LoginScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 400),
+        );
       case root:
       default:
         return CupertinoPageRoute<void>(
@@ -74,22 +94,22 @@ class _AppShellState extends ConsumerState<AppShell> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _TabItem(
-                      icon: CupertinoIcons.square_stack_3d_up_fill,
-                      inactiveIcon: CupertinoIcons.square_stack_3d_up,
+                      icon: Icons.inbox_rounded,
+                      inactiveIcon: Icons.inbox_outlined,
                       label: S.get(lang, 'tab_hue_box'),
                       isActive: _currentIndex == 0,
                       onTap: () => _switchTab(0),
                     ),
                     _TabItem(
-                      icon: CupertinoIcons.chat_bubble_2_fill,
-                      inactiveIcon: CupertinoIcons.chat_bubble_2,
+                      icon: Icons.mark_chat_unread_rounded,
+                      inactiveIcon: Icons.chat_bubble_outline_rounded,
                       label: S.get(lang, 'tab_chats'),
                       isActive: _currentIndex == 1,
                       onTap: () => _switchTab(1),
                     ),
                     _TabItem(
-                      icon: CupertinoIcons.gear_solid,
-                      inactiveIcon: CupertinoIcons.gear,
+                      icon: Icons.tune_rounded,
+                      inactiveIcon: Icons.tune_rounded,
                       label: S.get(lang, 'tab_settings'),
                       isActive: _currentIndex == 2,
                       onTap: () => _switchTab(2),

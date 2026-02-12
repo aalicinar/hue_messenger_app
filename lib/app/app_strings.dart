@@ -38,7 +38,7 @@ class S {
 
       // ── Hue Box screen ──
       'hue_box_title': 'Hue Box',
-      'hue_box_header': 'Sakin Kutu',
+      'hue_box_header': 'Hue Gelen',
       'hue_box_pending': '{n} bekleyen onay',
       'hue_box_empty_all': 'Hue Box şu an boş.',
       'hue_box_empty_filter': 'Bu filtrede öğe yok.',
@@ -90,6 +90,14 @@ class S {
       'category_yellow': 'Sarı',
       'category_green': 'Yeşil',
       'category_blue': 'Mavi',
+
+      // ── Login / Register ──
+      'login_tab_login': 'Giriş Yap',
+      'login_tab_register': 'Kayıt Ol',
+      'login_phone_hint': 'Telefon numarası',
+      'login_name_hint': 'Adınız',
+      'login_login_btn': 'Giriş Yap',
+      'login_register_btn': 'Kayıt Ol',
     },
 
     // ═══════════════════════════════════════════════════
@@ -111,7 +119,7 @@ class S {
       'cancel': 'Cancel',
 
       'hue_box_title': 'Hue Box',
-      'hue_box_header': 'Calm Box',
+      'hue_box_header': 'Hue Inbox',
       'hue_box_pending': '{n} pending approval',
       'hue_box_empty_all': 'Hue Box is empty.',
       'hue_box_empty_filter': 'No items in this filter.',
@@ -156,6 +164,14 @@ class S {
       'category_yellow': 'Yellow',
       'category_green': 'Green',
       'category_blue': 'Blue',
+
+      // ── Login / Register ──
+      'login_tab_login': 'Log In',
+      'login_tab_register': 'Sign Up',
+      'login_phone_hint': 'Phone number',
+      'login_name_hint': 'Your name',
+      'login_login_btn': 'Log In',
+      'login_register_btn': 'Sign Up',
     },
 
     // ═══════════════════════════════════════════════════
@@ -177,7 +193,7 @@ class S {
       'cancel': 'Отмена',
 
       'hue_box_title': 'Hue Box',
-      'hue_box_header': 'Спокойный ящик',
+      'hue_box_header': 'Hue Входящие',
       'hue_box_pending': '{n} ожидает подтверждения',
       'hue_box_empty_all': 'Hue Box пуст.',
       'hue_box_empty_filter': 'Нет элементов в этом фильтре.',
@@ -222,6 +238,14 @@ class S {
       'category_yellow': 'Жёлтый',
       'category_green': 'Зелёный',
       'category_blue': 'Синий',
+
+      // ── Login / Register ──
+      'login_tab_login': 'Войти',
+      'login_tab_register': 'Регистрация',
+      'login_phone_hint': 'Номер телефона',
+      'login_name_hint': 'Ваше имя',
+      'login_login_btn': 'Войти',
+      'login_register_btn': 'Зарегистрироваться',
     },
 
     // ═══════════════════════════════════════════════════
@@ -243,7 +267,7 @@ class S {
       'cancel': 'キャンセル',
 
       'hue_box_title': 'Hue Box',
-      'hue_box_header': '静かな箱',
+      'hue_box_header': 'Hue 受信箱',
       'hue_box_pending': '{n}件の承認待ち',
       'hue_box_empty_all': 'Hue Boxは空です。',
       'hue_box_empty_filter': 'このフィルターにはアイテムがありません。',
@@ -287,6 +311,14 @@ class S {
       'category_yellow': '黄',
       'category_green': '緑',
       'category_blue': '青',
+
+      // ── Login / Register ──
+      'login_tab_login': 'ログイン',
+      'login_tab_register': 'サインアップ',
+      'login_phone_hint': '電話番号',
+      'login_name_hint': 'お名前',
+      'login_login_btn': 'ログイン',
+      'login_register_btn': 'サインアップ',
     },
 
     // ═══════════════════════════════════════════════════
@@ -308,7 +340,7 @@ class S {
       'cancel': '取消',
 
       'hue_box_title': 'Hue Box',
-      'hue_box_header': '静音箱',
+      'hue_box_header': 'Hue 收件箱',
       'hue_box_pending': '{n}个待确认',
       'hue_box_empty_all': 'Hue Box 为空。',
       'hue_box_empty_filter': '此筛选下无项目。',
@@ -352,6 +384,14 @@ class S {
       'category_yellow': '黄色',
       'category_green': '绿色',
       'category_blue': '蓝色',
+
+      // ── Login / Register ──
+      'login_tab_login': '登录',
+      'login_tab_register': '注册',
+      'login_phone_hint': '手机号码',
+      'login_name_hint': '您的姓名',
+      'login_login_btn': '登录',
+      'login_register_btn': '注册',
     },
   };
 }

@@ -104,15 +104,14 @@ class _ChatComposerState extends State<ChatComposer> {
                         ),
                       ],
                     ),
-                    child: const Center(
-                      child: Text(
-                        'H',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 16,
-                          height: 1,
+                    child: Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/icons/hue_logo_gradient.png',
+                          width: 22,
+                          height: 22,
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),

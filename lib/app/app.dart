@@ -28,7 +28,7 @@ class HueApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       onGenerateRoute: HueRouter.onGenerateRoute,
-      initialRoute: HueRouter.root,
+      initialRoute: HueRouter.splash,
       debugShowCheckedModeBanner: false,
     );
   }
