@@ -60,10 +60,10 @@ class _SimpleHueLogoPainter extends CustomPainter {
   final HueLogoTone tone;
 
   static const _laneColors = <Color>[
-    Color(0xFF3B82F6), // blue
-    Color(0xFF22C55E), // green
-    Color(0xFFFACC15), // yellow
-    Color(0xFFEF4444), // red
+    Color(0xFF007AFF), // blue (iOS)
+    Color(0xFF34C759), // green (iOS)
+    Color(0xFFFFB800), // yellow (iOS)
+    Color(0xFFFF3B30), // red (iOS)
   ];
 
   @override
@@ -85,10 +85,10 @@ class _SimpleHueLogoPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0x183B82F6),
-            Color(0x1422C55E),
-            Color(0x14FACC15),
-            Color(0x1AEF4444),
+            Color(0x18007AFF),
+            Color(0x1434C759),
+            Color(0x14FFB800),
+            Color(0x1AFF3B30),
           ],
         ).createShader(rect);
       canvas.drawRect(rect, tintPaint);

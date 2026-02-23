@@ -6,7 +6,8 @@ import 'package:image/image.dart' as img;
 
 void main() {
   final projectRoot = Directory.current.path;
-  final iconsDir = '$projectRoot${Platform.pathSeparator}assets'
+  final iconsDir =
+      '$projectRoot${Platform.pathSeparator}assets'
       '${Platform.pathSeparator}icons';
   final gradientPath =
       '$iconsDir${Platform.pathSeparator}hue_logo_gradient.png';
@@ -27,10 +28,10 @@ void main() {
   }
 
   final variants = <String, List<int>>{
-    'blue': [59, 130, 246],
-    'green': [34, 197, 94],
-    'yellow': [250, 204, 21],
-    'red': [239, 68, 68],
+    'blue': [0, 122, 255], // #007AFF
+    'green': [52, 199, 89], // #34C759
+    'yellow': [255, 184, 0], // #FFB800
+    'red': [255, 59, 48], // #FF3B30
   };
 
   Directory(iconsDir).createSync(recursive: true);
@@ -42,7 +43,8 @@ void main() {
       targetG: entry.value[1],
       targetB: entry.value[2],
     );
-    final outPath = '$iconsDir${Platform.pathSeparator}hue_logo_${entry.key}.png';
+    final outPath =
+        '$iconsDir${Platform.pathSeparator}hue_logo_${entry.key}.png';
     File(outPath).writeAsBytesSync(img.encodePng(out));
     print('Generated: $outPath');
   }
