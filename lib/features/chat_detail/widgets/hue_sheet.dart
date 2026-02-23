@@ -17,6 +17,7 @@ class HueSheet extends StatefulWidget {
     this.title = 'Select H Template',
     this.allLabel = 'All',
     this.emptyLabel = 'No templates in this category.',
+    this.categoryLabelBuilder,
   });
 
   final List<Template> templates;
@@ -24,6 +25,7 @@ class HueSheet extends StatefulWidget {
   final String title;
   final String allLabel;
   final String emptyLabel;
+  final String Function(HueCategory category)? categoryLabelBuilder;
 
   @override
   State<HueSheet> createState() => _HueSheetState();
@@ -144,6 +146,11 @@ class _HueSheetState extends State<HueSheet> {
                           final template = _filteredTemplates[index];
                           return _TemplateCard(
                                 template: template,
+                                categoryLabel:
+                                    widget.categoryLabelBuilder?.call(
+                                      template.category,
+                                    ) ??
+                                    template.category.label,
                                 onTap: () =>
                                     widget.onTemplateSelected(template),
                               )
@@ -225,9 +232,14 @@ class _CategoryChip extends StatelessWidget {
 }
 
 class _TemplateCard extends StatelessWidget {
-  const _TemplateCard({required this.template, required this.onTap});
+  const _TemplateCard({
+    required this.template,
+    required this.categoryLabel,
+    required this.onTap,
+  });
 
   final Template template;
+  final String categoryLabel;
   final VoidCallback onTap;
 
   @override
@@ -277,7 +289,7 @@ class _TemplateCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    template.category.label,
+                    categoryLabel,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: color,
                       fontWeight: FontWeight.w600,

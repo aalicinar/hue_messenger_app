@@ -10,7 +10,7 @@ class MockSeed {
 
   static List<User> users() {
     return const [
-      User(id: 'current', name: 'Me'),
+      User(id: 'current', name: 'Me', status: 'Müsait'),
       User(id: 'alice', name: 'Alice'),
       User(id: 'bob', name: 'Bob'),
       User(id: 'zoe', name: 'Zoe'),

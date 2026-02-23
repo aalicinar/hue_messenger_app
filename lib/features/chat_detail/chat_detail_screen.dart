@@ -2,12 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/app_strings.dart';
 import '../../app/locale_provider.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/mock/mock_repo.dart';
 import '../../core/models/message.dart';
+import '../../core/models/hue_category.dart';
+import '../../shared/widgets/ack_reply_sheet.dart';
 import '../../shared/widgets/hue_avatar.dart';
 import '../../shared/widgets/hue_backdrop.dart';
 import 'chat_detail_controller.dart';
@@ -42,17 +45,63 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
     final repository = ref.read(mockRepositoryProvider);
     final lang = ref.watch(localeProvider);
+    final recipient = state.recipientId.isEmpty
+        ? null
+        : repository.getUserById(state.recipientId);
+    final displayTitle = state.title.trim().isEmpty
+        ? S.get(lang, 'chats_unknown')
+        : state.title;
 
     _maybeScrollToInitial(state.messages);
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
+        transitionBetweenRoutes: false,
         middle: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            HueAvatar(name: state.title, size: 28, showBorder: false),
+            HueAvatar(
+              name: displayTitle,
+              size: 28,
+              showBorder: false,
+              avatarUrl: recipient?.avatarUrl,
+            ),
             const SizedBox(width: HueSpacing.xs),
-            Flexible(child: Text(state.title, overflow: TextOverflow.ellipsis)),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayTitle,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: HueColors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        S.get(lang, 'chat_online'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: HueColors.green,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -87,23 +136,36 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         itemCount: state.messages.length,
                         itemBuilder: (context, index) {
                           final message = state.messages[index];
-                          return KeyedSubtree(
-                            key: _keyForMessage(message.id),
-                            child: _buildMessageTile(
-                              message: message,
-                              isMe:
-                                  message.senderId ==
-                                  MockRepository.currentUserId,
-                              isHighlighted:
-                                  message.id == widget.initialMessageId,
-                              onAcknowledge: () => _onAcknowledgeHue(
-                                context: context,
-                                lang: lang,
-                                controller: controller,
-                                messageId: message.id,
-                                replyOptions: state.ackReplies,
+                          final showDateSep = _shouldShowDateSeparator(
+                            state.messages,
+                            index,
+                          );
+                          return Column(
+                            children: [
+                              if (showDateSep)
+                                _DateSeparator(
+                                  date: message.createdAt,
+                                  lang: lang,
+                                ),
+                              KeyedSubtree(
+                                key: _keyForMessage(message.id),
+                                child: _buildMessageTile(
+                                  message: message,
+                                  isMe:
+                                      message.senderId ==
+                                      MockRepository.currentUserId,
+                                  isHighlighted:
+                                      message.id == widget.initialMessageId,
+                                  onAcknowledge: () => _onAcknowledgeHue(
+                                    context: context,
+                                    lang: lang,
+                                    controller: controller,
+                                    messageId: message.id,
+                                    replyOptions: state.ackReplies,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           );
                         },
                       ),
@@ -198,6 +260,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           title: S.get(lang, 'hue_sheet_title'),
           allLabel: S.get(lang, 'filter_all'),
           emptyLabel: S.get(lang, 'hue_sheet_empty'),
+          categoryLabelBuilder: (category) => _categoryLabel(lang, category),
           onTemplateSelected: (template) async {
             Navigator.of(sheetContext).pop();
             HapticFeedback.selectionClick();
@@ -213,6 +276,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         );
       },
     );
+  }
+
+  String _categoryLabel(AppLanguage lang, HueCategory category) {
+    switch (category) {
+      case HueCategory.red:
+        return S.get(lang, 'category_red');
+      case HueCategory.yellow:
+        return S.get(lang, 'category_yellow');
+      case HueCategory.green:
+        return S.get(lang, 'category_green');
+      case HueCategory.blue:
+        return S.get(lang, 'category_blue');
+    }
   }
 
   Future<void> _onAcknowledgeHue({
@@ -238,29 +314,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     required AppLanguage lang,
     required List<String> replyOptions,
   }) async {
-    final options = replyOptions.isEmpty
-        ? const <String>['OK', 'Yes', 'No']
-        : replyOptions;
-    return showCupertinoModalPopup<String>(
+    return showAckReplySheet(
       context: context,
-      builder: (sheetContext) {
-        return CupertinoActionSheet(
-          title: Text(S.get(lang, 'hue_box_reply_title')),
-          message: Text(S.get(lang, 'hue_box_reply_message')),
-          actions: [
-            for (final option in options)
-              CupertinoActionSheetAction(
-                onPressed: () => Navigator.of(sheetContext).pop(option),
-                child: Text(option),
-              ),
-          ],
-          cancelButton: CupertinoActionSheetAction(
-            onPressed: () => Navigator.of(sheetContext).pop(),
-            isDefaultAction: true,
-            child: Text(S.get(lang, 'cancel')),
-          ),
-        );
-      },
+      lang: lang,
+      replyOptions: replyOptions,
+      title: S.get(lang, 'hue_box_reply_title'),
+      message: S.get(lang, 'hue_box_reply_message'),
+      cancelLabel: S.get(lang, 'cancel'),
     );
   }
 
@@ -269,7 +329,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     required AppLanguage lang,
     required Duration retryAfter,
   }) async {
-    final waitText = _formatWait(retryAfter);
+    final waitText = _formatWait(retryAfter, lang: lang);
     await showCupertinoDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -281,7 +341,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('OK'),
+              child: Text(S.get(lang, 'common_ok')),
             ),
           ],
         );
@@ -289,17 +349,86 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  String _formatWait(Duration duration) {
-    if (duration <= Duration.zero) return 'a moment';
-    if (duration.inSeconds < 60) return '${duration.inSeconds}s';
+  String _formatWait(Duration duration, {required AppLanguage lang}) {
+    final sec = S.get(lang, 'rate_limits_unit_sec');
+    final min = S.get(lang, 'rate_limits_unit_min');
+    final hour = S.get(lang, 'rate_limits_unit_hour');
+
+    if (duration <= Duration.zero) return S.get(lang, 'chat_wait_moment');
+    if (duration.inSeconds < 60) return '${duration.inSeconds} $sec';
     if (duration.inMinutes < 60) {
       final seconds = duration.inSeconds % 60;
-      if (seconds == 0) return '${duration.inMinutes}m';
-      return '${duration.inMinutes}m ${seconds}s';
+      if (seconds == 0) return '${duration.inMinutes} $min';
+      return '${duration.inMinutes} $min $seconds $sec';
     }
     final hours = duration.inHours;
     final minutes = duration.inMinutes % 60;
     final seconds = duration.inSeconds % 60;
-    return '${hours}h ${minutes}m ${seconds}s';
+    return '$hours $hour $minutes $min $seconds $sec';
+  }
+
+  bool _shouldShowDateSeparator(List<Message> messages, int index) {
+    if (index == 0) return true;
+    final prev = messages[index - 1].createdAt;
+    final cur = messages[index].createdAt;
+    return prev.year != cur.year ||
+        prev.month != cur.month ||
+        prev.day != cur.day;
+  }
+}
+
+class _DateSeparator extends StatelessWidget {
+  const _DateSeparator({required this.date, required this.lang});
+
+  final DateTime date;
+  final AppLanguage lang;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
+    final isYesterday =
+        date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day - 1;
+
+    String label;
+    if (isToday) {
+      label = S.get(lang, 'chat_today');
+    } else if (isYesterday) {
+      label = S.get(lang, 'chat_yesterday');
+    } else {
+      label = DateFormat('d MMM yyyy').format(date);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: HueSpacing.sm),
+      child: Row(
+        children: [
+          Expanded(
+            child: Divider(
+              color: HueColors.textSecondary.withValues(alpha: 0.15),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: HueSpacing.sm),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: HueColors.textSecondary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Divider(
+              color: HueColors.textSecondary.withValues(alpha: 0.15),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

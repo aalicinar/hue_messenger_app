@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/app_strings.dart';
 import '../../app/locale_provider.dart';
 import '../../app/theme/tokens.dart';
+import '../../shared/widgets/hue_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -63,15 +64,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: HueSpacing.xxl),
 
                   // ── Logo ──
-                  ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Image.asset(
-                          'assets/icons/hue_logo_gradient.png',
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.cover,
-                        ),
-                      )
+                  const HueLogo(size: 96)
                       .animate()
                       .fadeIn(duration: 600.ms)
                       .scale(
@@ -93,17 +86,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       letterSpacing: -0.8,
                     ),
                   ).animate(delay: 200.ms).fadeIn(duration: 500.ms),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    'Feel your messages',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.45),
-                      fontSize: 14,
-                      letterSpacing: 1.2,
-                    ),
-                  ).animate(delay: 400.ms).fadeIn(duration: 500.ms),
 
                   const SizedBox(height: HueSpacing.xxl),
 

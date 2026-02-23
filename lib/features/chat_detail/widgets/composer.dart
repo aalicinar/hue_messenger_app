@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/tokens.dart';
+import '../../../shared/widgets/hue_logo.dart';
 
 class ChatComposer extends StatefulWidget {
   const ChatComposer({
@@ -105,14 +106,10 @@ class _ChatComposerState extends State<ChatComposer> {
                       ],
                     ),
                     child: Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          'assets/icons/hue_logo_gradient.png',
-                          width: 22,
-                          height: 22,
-                          fit: BoxFit.cover,
-                        ),
+                      child: const HueLogo(
+                        size: 22,
+                        enableAnimation: false,
+                        showShadow: false,
                       ),
                     ),
                   ),

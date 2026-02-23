@@ -13,7 +13,7 @@ import '../../core/models/chat.dart';
 import '../../core/models/user.dart';
 import '../../shared/widgets/hue_avatar.dart';
 import '../../shared/widgets/hue_backdrop.dart';
-import '../../shared/widgets/hue_logo.dart';
+import '../../shared/widgets/hue_screen_header.dart';
 import '../chat_detail/chat_detail_screen.dart';
 import 'chats_controller.dart';
 
@@ -30,6 +30,7 @@ class ChatsScreen extends ConsumerWidget {
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
+        transitionBetweenRoutes: false,
         middle: Text(S.get(lang, 'chats_title')),
       ),
       child: HueBackdrop(
@@ -44,99 +45,44 @@ class ChatsScreen extends ConsumerWidget {
             ),
             child: Column(
               children: [
+                HueScreenHeader(
+                  title: S.get(lang, 'chats_header'),
+                  subtitle: S
+                      .get(lang, 'chats_active_count')
+                      .replaceAll('{n}', '${chats.length}'),
+                ),
+                const SizedBox(height: HueSpacing.sm),
+                // ── Search bar ──
                 HueGlassCard(
-                  child: Row(
-                    children: [
-                      const HueLogo(size: 42),
-                      const SizedBox(width: HueSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              S.get(lang, 'chats_header'),
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w800),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              S
-                                  .get(lang, 'chats_active_count')
-                                  .replaceAll('{n}', '${chats.length}'),
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: HueColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: HueSpacing.sm,
+                    vertical: HueSpacing.xxs,
+                  ),
+                  child: CupertinoSearchTextField(
+                    placeholder: S.get(lang, 'chats_search'),
+                    onChanged: controller.setSearch,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    backgroundColor: Colors.transparent,
+                    borderRadius: BorderRadius.circular(HueRadius.pill),
+                    prefixInsets: const EdgeInsets.only(left: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: HueSpacing.xs,
+                      vertical: HueSpacing.xs,
+                    ),
+                    placeholderStyle: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: HueColors.textSecondary),
                   ),
                 ),
-                const SizedBox(height: HueSpacing.md),
+                const SizedBox(height: HueSpacing.sm),
                 Expanded(
-                  child: chats.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.chat_bubble_2,
-                                size: 48,
-                                color: HueColors.textSecondary.withValues(
-                                  alpha: 0.3,
-                                ),
-                              ),
-                              const SizedBox(height: HueSpacing.sm),
-                              Text(
-                                S.get(lang, 'chats_empty'),
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: HueColors.textSecondary),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.only(
-                            bottom: HueSpacing.xxl + HueSpacing.xl,
-                          ),
-                          itemCount: chats.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: HueSpacing.xs),
-                          itemBuilder: (context, index) {
-                            final chat = chats[index];
-                            final otherUser = _otherUser(repository, chat);
-                            return _ChatListItem(
-                                  title:
-                                      otherUser?.name ??
-                                      S.get(lang, 'chats_unknown'),
-                                  subtitle:
-                                      chat.lastPreview ??
-                                      S.get(lang, 'chats_no_message'),
-                                  time: _formatTime(chat.lastAt),
-                                  onTap: () async {
-                                    await Navigator.of(context).push(
-                                      CupertinoPageRoute<void>(
-                                        builder: (_) =>
-                                            ChatDetailScreen(chatId: chat.id),
-                                      ),
-                                    );
-                                    controller.load();
-                                  },
-                                )
-                                .animate()
-                                .fadeIn(
-                                  duration: 400.ms,
-                                  delay: (80 * index).ms,
-                                )
-                                .slideY(
-                                  begin: 0.12,
-                                  end: 0,
-                                  duration: 400.ms,
-                                  delay: (80 * index).ms,
-                                  curve: Curves.easeOutCubic,
-                                );
-                          },
-                        ),
+                  child: _buildChatList(
+                    context,
+                    ref,
+                    chatsState,
+                    controller,
+                    repository,
+                    lang,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: HueSpacing.sm),
@@ -240,6 +186,83 @@ class ChatsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildChatList(
+    BuildContext context,
+    WidgetRef ref,
+    ChatsState chatsState,
+    ChatsController controller,
+    MockRepository repository,
+    AppLanguage lang,
+  ) {
+    // Apply search filter against actual user names
+    final query = chatsState.searchQuery.toLowerCase();
+    final displayChats = query.isEmpty
+        ? chatsState.chats
+        : chatsState.chats.where((chat) {
+            final otherUser = _otherUser(repository, chat);
+            final name = (otherUser?.name ?? '').toLowerCase();
+            final preview = (chat.lastPreview ?? '').toLowerCase();
+            return name.contains(query) || preview.contains(query);
+          }).toList();
+
+    if (displayChats.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              query.isEmpty
+                  ? CupertinoIcons.chat_bubble_2
+                  : CupertinoIcons.search,
+              size: 48,
+              color: HueColors.textSecondary.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: HueSpacing.sm),
+            Text(
+              S.get(lang, 'chats_empty'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: HueColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.only(bottom: HueSpacing.xxl + HueSpacing.xl),
+      itemCount: displayChats.length,
+      separatorBuilder: (_, __) => const SizedBox(height: HueSpacing.xs),
+      itemBuilder: (context, index) {
+        final chat = displayChats[index];
+        final otherUser = _otherUser(repository, chat);
+        return _ChatListItem(
+              title: otherUser?.name ?? S.get(lang, 'chats_unknown'),
+              avatarUrl: otherUser?.avatarUrl,
+              subtitle: chat.lastPreview ?? S.get(lang, 'chats_no_message'),
+              time: _formatTime(chat.lastAt),
+              onTap: () async {
+                await Navigator.of(context).push(
+                  CupertinoPageRoute<void>(
+                    builder: (_) => ChatDetailScreen(chatId: chat.id),
+                  ),
+                );
+                controller.load();
+              },
+            )
+            .animate()
+            .fadeIn(duration: 400.ms, delay: (80 * index).ms)
+            .slideY(
+              begin: 0.12,
+              end: 0,
+              duration: 400.ms,
+              delay: (80 * index).ms,
+              curve: Curves.easeOutCubic,
+            );
+      },
+    );
+  }
+
   User? _otherUser(MockRepository repository, Chat chat) {
     for (final memberId in chat.memberIds) {
       if (memberId == MockRepository.currentUserId) continue;
@@ -257,12 +280,14 @@ class ChatsScreen extends ConsumerWidget {
 class _ChatListItem extends StatelessWidget {
   const _ChatListItem({
     required this.title,
+    required this.avatarUrl,
     required this.subtitle,
     required this.time,
     required this.onTap,
   });
 
   final String title;
+  final String? avatarUrl;
   final String subtitle;
   final String time;
   final VoidCallback onTap;
@@ -276,7 +301,7 @@ class _ChatListItem extends StatelessWidget {
         padding: const EdgeInsets.all(HueSpacing.sm + 2),
         child: Row(
           children: [
-            HueAvatar(name: title, size: 48),
+            HueAvatar(name: title, size: 48, avatarUrl: avatarUrl),
             const SizedBox(width: HueSpacing.sm),
             Expanded(
               child: Column(

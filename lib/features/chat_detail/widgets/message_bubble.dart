@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -96,13 +97,31 @@ class MessageBubble extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 4),
-              Text(
-                DateFormat('HH:mm').format(message.createdAt),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: HueColors.textSecondary.withValues(alpha: 0.7),
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    DateFormat('HH:mm').format(message.createdAt),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: HueColors.textSecondary.withValues(alpha: 0.7),
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      CupertinoIcons.checkmark_alt,
+                      size: 13,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.7),
+                    ),
+                    Icon(
+                      CupertinoIcons.checkmark_alt,
+                      size: 13,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.7),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

@@ -60,7 +60,7 @@ class ChatDetailController extends StateNotifier<ChatDetailState> {
        super(
          ChatDetailState(
            chatId: chatId,
-           title: 'Sohbet',
+           title: '',
            recipientId: '',
            messages: const [],
            ackReplies: const [],
@@ -81,8 +81,7 @@ class ChatDetailController extends StateNotifier<ChatDetailState> {
       }
     }
 
-    final recipientName =
-        _repository.getUserById(recipientId)?.name ?? 'Bilinmiyor';
+    final recipientName = _repository.getUserById(recipientId)?.name ?? '';
     final messages = _repository.getMessagesForChat(state.chatId);
 
     state = state.copyWith(

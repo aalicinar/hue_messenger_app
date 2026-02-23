@@ -48,6 +48,13 @@ class MockRepository {
       _ackReplies = List<String>.from(MockSeed.ackReplies());
 
   static const currentUserId = 'current';
+  static const List<String> avatarPresets = <String>[
+    'preset:spectrum',
+    'preset:ember',
+    'preset:amber',
+    'preset:mint',
+    'preset:sky',
+  ];
 
   final List<User> _users;
   final List<Chat> _chats;
@@ -55,6 +62,10 @@ class MockRepository {
   final List<Template> _templates;
   RateLimits _rateLimits;
   final List<String> _ackReplies;
+  bool _readReceiptsEnabled = true;
+  bool _typingIndicatorEnabled = true;
+  bool _quietHoursEnabled = false;
+  bool _profilePhotoVisible = true;
   final Uuid _uuid = const Uuid();
   final RateLimitService _rateLimitService = RateLimitService();
   final StreamController<int> _revisionController =
@@ -71,6 +82,70 @@ class MockRepository {
 
   User getCurrentUser() =>
       _users.firstWhere((user) => user.id == currentUserId);
+
+  void updateCurrentUserName(String name) {
+    final normalized = name.trim();
+    if (normalized.isEmpty) {
+      throw FormatException('Display name cannot be empty.');
+    }
+    if (normalized.length > 24) {
+      throw FormatException('Display name must be 24 characters or fewer.');
+    }
+    _updateCurrentUser((current) => current.copyWith(name: normalized));
+  }
+
+  void updateCurrentUserStatus(String status) {
+    final normalized = status.trim();
+    if (normalized.length > 40) {
+      throw FormatException('Status must be 40 characters or fewer.');
+    }
+    _updateCurrentUser((current) {
+      if (normalized.isEmpty) return current.copyWith(clearStatus: true);
+      return current.copyWith(status: normalized);
+    });
+  }
+
+  void updateCurrentUserAvatar(String? avatarAsset) {
+    if (avatarAsset != null && !avatarPresets.contains(avatarAsset)) {
+      throw StateError('Unsupported avatar preset.');
+    }
+    _updateCurrentUser((current) {
+      if (avatarAsset == null) return current.copyWith(clearAvatarUrl: true);
+      return current.copyWith(avatarUrl: avatarAsset);
+    });
+  }
+
+  bool getReadReceiptsEnabled() => _readReceiptsEnabled;
+
+  bool getTypingIndicatorEnabled() => _typingIndicatorEnabled;
+
+  bool getQuietHoursEnabled() => _quietHoursEnabled;
+
+  bool getProfilePhotoVisible() => _profilePhotoVisible;
+
+  void setReadReceiptsEnabled(bool value) {
+    if (_readReceiptsEnabled == value) return;
+    _readReceiptsEnabled = value;
+    _emitRevision();
+  }
+
+  void setTypingIndicatorEnabled(bool value) {
+    if (_typingIndicatorEnabled == value) return;
+    _typingIndicatorEnabled = value;
+    _emitRevision();
+  }
+
+  void setQuietHoursEnabled(bool value) {
+    if (_quietHoursEnabled == value) return;
+    _quietHoursEnabled = value;
+    _emitRevision();
+  }
+
+  void setProfilePhotoVisible(bool value) {
+    if (_profilePhotoVisible == value) return;
+    _profilePhotoVisible = value;
+    _emitRevision();
+  }
 
   User? getUserById(String id) {
     for (final user in _users) {
@@ -187,7 +262,7 @@ class MockRepository {
     _messages.add(message);
     _updateChatPreview(
       chatId: chatId,
-      preview: '${category.label}: $templateText',
+      preview: 'H: $templateText',
       timestamp: now,
     );
     _rateLimitService.recordSent(
@@ -385,6 +460,13 @@ class MockRepository {
       lastPreview: preview,
       lastAt: timestamp,
     );
+  }
+
+  void _updateCurrentUser(User Function(User current) updater) {
+    final index = _users.indexWhere((user) => user.id == currentUserId);
+    if (index == -1) return;
+    _users[index] = updater(_users[index]);
+    _emitRevision();
   }
 
   void _emitRevision() {

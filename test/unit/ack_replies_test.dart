@@ -33,6 +33,18 @@ void main() {
       expect(message.acknowledgedText, 'Evet');
     });
 
+    test('stores custom reply text when acknowledging', () {
+      final repo = MockRepository.seeded();
+
+      repo.acknowledgeHueMessage('m2', replyText: 'Toplantiya giriyorum');
+      final message = repo
+          .getMessagesForChat('chat_alice')
+          .firstWhere((item) => item.id == 'm2');
+
+      expect(message.acknowledgedAt, isNotNull);
+      expect(message.acknowledgedText, 'Toplantiya giriyorum');
+    });
+
     test('uses first configured option as default acknowledge reply', () {
       final repo = MockRepository.seeded();
 

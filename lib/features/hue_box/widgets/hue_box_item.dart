@@ -14,6 +14,7 @@ class HueBoxItem extends StatelessWidget {
     super.key,
     required this.message,
     required this.senderName,
+    this.senderAvatarUrl,
     required this.onTap,
     required this.onAcknowledge,
     required this.onAcknowledgeSwipe,
@@ -24,6 +25,7 @@ class HueBoxItem extends StatelessWidget {
 
   final Message message;
   final String senderName;
+  final String? senderAvatarUrl;
   final VoidCallback onTap;
   final VoidCallback onAcknowledge;
   final VoidCallback onAcknowledgeSwipe;
@@ -58,7 +60,11 @@ class HueBoxItem extends StatelessWidget {
             children: [
               Stack(
                 children: [
-                  HueAvatar(name: senderName, size: 46),
+                  HueAvatar(
+                    name: senderName,
+                    size: 46,
+                    avatarUrl: senderAvatarUrl,
+                  ),
                   Positioned(
                     right: 0,
                     bottom: 0,

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/app_strings.dart';
+import '../../app/locale_provider.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/models/hue_category.dart';
 import '../../core/models/template.dart';
@@ -17,9 +19,12 @@ class TemplatesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(templatesControllerProvider);
     final controller = ref.read(templatesControllerProvider.notifier);
+    final lang = ref.watch(localeProvider);
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(middle: Text('Şablonlar')),
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(S.get(lang, 'templates_nav_title')),
+      ),
       child: HueBackdrop(
         child: SafeArea(
           child: Padding(
@@ -50,7 +55,10 @@ class TemplatesScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: HueSpacing.sm),
                       Text(
-                        'Özel şablon: ${controller.customCountInSelectedCategory()}/10',
+                        S.get(lang, 'templates_custom_count').replaceAll(
+                          '{n}',
+                          '${controller.customCountInSelectedCategory()}',
+                        ),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: HueColors.textSecondary,
                         ),
@@ -63,7 +71,7 @@ class TemplatesScreen extends ConsumerWidget {
                   child: state.templates.isEmpty
                       ? Center(
                           child: Text(
-                            'Bu kategoride şablon yok.',
+                            S.get(lang, 'templates_empty'),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: HueColors.textSecondary),
                           ),
@@ -76,12 +84,18 @@ class TemplatesScreen extends ConsumerWidget {
                             final template = state.templates[index];
                             return _TemplateTile(
                               template: template,
+                              defaultLabel: S.get(
+                                lang,
+                                'templates_default_label',
+                              ),
+                              customLabel: S.get(lang, 'templates_custom_label'),
                               onEdit: template.isDefault
                                   ? null
                                   : () => _onEditTemplate(
                                       context: context,
                                       controller: controller,
                                       template: template,
+                                      lang: lang,
                                     ),
                               onDelete: template.isDefault
                                   ? null
@@ -89,6 +103,7 @@ class TemplatesScreen extends ConsumerWidget {
                                       context: context,
                                       controller: controller,
                                       template: template,
+                                      lang: lang,
                                     ),
                             );
                           },
@@ -99,7 +114,11 @@ class TemplatesScreen extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   onPressed: () {
                     HapticFeedback.selectionClick();
-                    _onAddTemplate(context: context, controller: controller);
+                    _onAddTemplate(
+                      context: context,
+                      controller: controller,
+                      lang: lang,
+                    );
                   },
                   child: Container(
                     width: double.infinity,
@@ -111,14 +130,14 @@ class TemplatesScreen extends ConsumerWidget {
                       color: HueColors.blue,
                       borderRadius: BorderRadius.circular(HueRadius.lg),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(CupertinoIcons.add, color: Colors.white),
-                        SizedBox(width: HueSpacing.xs),
+                        const Icon(CupertinoIcons.add, color: Colors.white),
+                        const SizedBox(width: HueSpacing.xs),
                         Text(
-                          'Şablon Ekle',
-                          style: TextStyle(
+                          S.get(lang, 'templates_add_button'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                           ),
@@ -138,25 +157,28 @@ class TemplatesScreen extends ConsumerWidget {
   Future<void> _onAddTemplate({
     required BuildContext context,
     required TemplatesController controller,
+    required AppLanguage lang,
   }) async {
     if (!controller.canAddInSelectedCategory()) {
       await _showErrorDialog(
         context: context,
-        message: 'Bu kategoride en fazla 10 özel şablon olabilir.',
+        message: S.get(lang, 'templates_limit_error'),
+        lang: lang,
       );
       return;
     }
 
     final text = await _showTemplateInputDialog(
       context: context,
-      title: 'Yeni Şablon',
-      actionLabel: 'Ekle',
+      title: S.get(lang, 'templates_new_title'),
+      actionLabel: S.get(lang, 'common_add'),
+      lang: lang,
     );
     if (text == null) return;
 
     final error = controller.addTemplate(text);
     if (error != null && context.mounted) {
-      await _showErrorDialog(context: context, message: error);
+      await _showErrorDialog(context: context, message: error, lang: lang);
     }
   }
 
@@ -164,12 +186,14 @@ class TemplatesScreen extends ConsumerWidget {
     required BuildContext context,
     required TemplatesController controller,
     required Template template,
+    required AppLanguage lang,
   }) async {
     final text = await _showTemplateInputDialog(
       context: context,
-      title: 'Şablonu Düzenle',
-      actionLabel: 'Kaydet',
+      title: S.get(lang, 'templates_edit_title'),
+      actionLabel: S.get(lang, 'common_save'),
       initialValue: template.text,
+      lang: lang,
     );
     if (text == null) return;
 
@@ -178,7 +202,7 @@ class TemplatesScreen extends ConsumerWidget {
       text: text,
     );
     if (error != null && context.mounted) {
-      await _showErrorDialog(context: context, message: error);
+      await _showErrorDialog(context: context, message: error, lang: lang);
     }
   }
 
@@ -186,13 +210,14 @@ class TemplatesScreen extends ConsumerWidget {
     required BuildContext context,
     required TemplatesController controller,
     required Template template,
+    required AppLanguage lang,
   }) async {
-    final confirmed = await _showDeleteConfirmDialog(context: context);
+    final confirmed = await _showDeleteConfirmDialog(context: context, lang: lang);
     if (!confirmed) return;
 
     final error = controller.deleteTemplate(template.id);
     if (error != null && context.mounted) {
-      await _showErrorDialog(context: context, message: error);
+      await _showErrorDialog(context: context, message: error, lang: lang);
     }
   }
 
@@ -200,6 +225,7 @@ class TemplatesScreen extends ConsumerWidget {
     required BuildContext context,
     required String title,
     required String actionLabel,
+    required AppLanguage lang,
     String? initialValue,
   }) async {
     final controller = TextEditingController(text: initialValue ?? '');
@@ -212,7 +238,7 @@ class TemplatesScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(top: HueSpacing.sm),
             child: CupertinoTextField(
               controller: controller,
-              placeholder: 'Şablon metni',
+              placeholder: S.get(lang, 'templates_input_placeholder'),
               maxLines: 3,
               autofocus: true,
             ),
@@ -220,7 +246,7 @@ class TemplatesScreen extends ConsumerWidget {
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Vazgeç'),
+              child: Text(S.get(lang, 'cancel')),
             ),
             CupertinoDialogAction(
               onPressed: () => Navigator.of(dialogContext).pop(controller.text),
@@ -237,17 +263,18 @@ class TemplatesScreen extends ConsumerWidget {
   Future<void> _showErrorDialog({
     required BuildContext context,
     required String message,
+    required AppLanguage lang,
   }) async {
     await showCupertinoDialog<void>(
       context: context,
       builder: (dialogContext) {
         return CupertinoAlertDialog(
-          title: const Text('Kaydedilemedi'),
+          title: Text(S.get(lang, 'common_could_not_save')),
           content: Text(message),
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('OK'),
+              child: Text(S.get(lang, 'common_ok')),
             ),
           ],
         );
@@ -255,22 +282,25 @@ class TemplatesScreen extends ConsumerWidget {
     );
   }
 
-  Future<bool> _showDeleteConfirmDialog({required BuildContext context}) async {
+  Future<bool> _showDeleteConfirmDialog({
+    required BuildContext context,
+    required AppLanguage lang,
+  }) async {
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return CupertinoAlertDialog(
-          title: const Text('Şablon silinsin mi?'),
-          content: const Text('Bu işlem geri alınamaz.'),
+          title: Text(S.get(lang, 'templates_delete_title')),
+          content: Text(S.get(lang, 'templates_delete_body')),
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Vazgeç'),
+              child: Text(S.get(lang, 'cancel')),
             ),
             CupertinoDialogAction(
               isDestructiveAction: true,
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Sil'),
+              child: Text(S.get(lang, 'common_delete')),
             ),
           ],
         );
@@ -281,9 +311,17 @@ class TemplatesScreen extends ConsumerWidget {
 }
 
 class _TemplateTile extends StatelessWidget {
-  const _TemplateTile({required this.template, this.onEdit, this.onDelete});
+  const _TemplateTile({
+    required this.template,
+    required this.defaultLabel,
+    required this.customLabel,
+    this.onEdit,
+    this.onDelete,
+  });
 
   final Template template;
+  final String defaultLabel;
+  final String customLabel;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -317,7 +355,7 @@ class _TemplateTile extends StatelessWidget {
                 ),
                 const SizedBox(height: HueSpacing.xxs),
                 Text(
-                  template.isDefault ? 'Varsayılan' : 'Özel',
+                  template.isDefault ? defaultLabel : customLabel,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: HueColors.textSecondary,
                   ),

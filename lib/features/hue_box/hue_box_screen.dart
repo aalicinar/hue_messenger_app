@@ -8,7 +8,9 @@ import '../../app/app_strings.dart';
 import '../../app/locale_provider.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/mock/mock_repo.dart';
-import '../../shared/widgets/hue_logo.dart';
+import '../../core/models/user.dart';
+import '../../shared/widgets/ack_reply_sheet.dart';
+import '../../shared/widgets/hue_screen_header.dart';
 import '../../shared/widgets/hue_backdrop.dart';
 import '../chat_detail/chat_detail_screen.dart';
 import 'hue_box_controller.dart';
@@ -30,6 +32,7 @@ class HueBoxScreen extends ConsumerWidget {
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
+        transitionBetweenRoutes: false,
         middle: Text(S.get(lang, 'hue_box_title')),
       ),
       child: HueBackdrop(
@@ -46,56 +49,13 @@ class HueBoxScreen extends ConsumerWidget {
                 ),
                 child: Column(
                   children: [
-                    HueGlassCard(
-                      child: Row(
-                        children: [
-                          const HueLogo(size: 42),
-                          const SizedBox(width: HueSpacing.sm),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  S.get(lang, 'hue_box_header'),
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w800),
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  children: [
-                                    if (unackedCount > 0) ...[
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: HueColors.red,
-                                          boxShadow: HueShadows.glowFor(
-                                            HueColors.red,
-                                            intensity: 0.4,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                    ],
-                                    Text(
-                                      S
-                                          .get(lang, 'hue_box_pending')
-                                          .replaceAll('{n}', '$unackedCount'),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: HueColors.textSecondary,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    HueScreenHeader(
+                      title: S.get(lang, 'hue_box_header'),
+                      subtitle: S
+                          .get(lang, 'hue_box_pending')
+                          .replaceAll('{n}', '$unackedCount'),
+                      showDot: unackedCount > 0,
+                      dotColor: HueColors.red,
                     ),
                     const SizedBox(height: HueSpacing.sm),
                     HueGlassCard(
@@ -128,12 +88,13 @@ class HueBoxScreen extends ConsumerWidget {
                                   const SizedBox(height: HueSpacing.xs),
                               itemBuilder: (context, index) {
                                 final message = state.filteredMessages[index];
+                                final sender = _sender(ref, message.senderId);
                                 return HueBoxItem(
                                       message: message,
-                                      senderName: _senderName(
-                                        ref,
-                                        message.senderId,
-                                      ),
+                                      senderName:
+                                          sender?.name ??
+                                          S.get(lang, 'chats_unknown'),
+                                      senderAvatarUrl: sender?.avatarUrl,
                                       replyLabel: S.get(lang, 'hue_box_reply'),
                                       quickAckLabel: S.get(
                                         lang,
@@ -162,6 +123,7 @@ class HueBoxScreen extends ConsumerWidget {
                                           message.id,
                                           replyText: _defaultReply(
                                             state.ackReplies,
+                                            lang,
                                           ),
                                         );
                                       },
@@ -241,9 +203,9 @@ class HueBoxScreen extends ConsumerWidget {
     );
   }
 
-  String _senderName(WidgetRef ref, String senderId) {
+  User? _sender(WidgetRef ref, String senderId) {
     final repository = ref.read(mockRepositoryProvider);
-    return repository.getUserById(senderId)?.name ?? 'Unknown';
+    return repository.getUserById(senderId);
   }
 
   Future<void> _openChatDetail({
@@ -265,37 +227,20 @@ class HueBoxScreen extends ConsumerWidget {
     required List<String> replyOptions,
     required ValueChanged<String> onSelected,
   }) async {
-    await showCupertinoModalPopup<void>(
+    final selected = await showAckReplySheet(
       context: context,
-      builder: (context) {
-        final options = replyOptions.isEmpty
-            ? const <String>['OK', 'Yes', 'No']
-            : replyOptions;
-        return CupertinoActionSheet(
-          title: Text(S.get(lang, 'hue_box_reply_title')),
-          message: Text(S.get(lang, 'hue_box_reply_message')),
-          actions: [
-            for (final reply in options)
-              CupertinoActionSheetAction(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  onSelected(reply);
-                },
-                child: Text(reply),
-              ),
-          ],
-          cancelButton: CupertinoActionSheetAction(
-            onPressed: () => Navigator.of(context).pop(),
-            isDefaultAction: true,
-            child: Text(S.get(lang, 'cancel')),
-          ),
-        );
-      },
+      lang: lang,
+      replyOptions: replyOptions,
+      title: S.get(lang, 'hue_box_reply_title'),
+      message: S.get(lang, 'hue_box_reply_message'),
+      cancelLabel: S.get(lang, 'cancel'),
     );
+    if (selected == null) return;
+    onSelected(selected);
   }
 
-  String _defaultReply(List<String> replies) {
-    if (replies.isEmpty) return 'OK';
+  String _defaultReply(List<String> replies, AppLanguage lang) {
+    if (replies.isEmpty) return S.get(lang, 'common_ok');
     return replies.first;
   }
 

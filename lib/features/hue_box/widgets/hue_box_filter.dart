@@ -75,7 +75,7 @@ class _FilterChip extends StatelessWidget {
                   colors: isAll
                       ? [color, color.withValues(alpha: 0.85)]
                       : [
-                          color.withValues(alpha: 0.2),
+                          color.withValues(alpha: 0.25),
                           color.withValues(alpha: 0.12),
                         ],
                 )
@@ -101,10 +101,26 @@ class _FilterChip extends StatelessWidget {
                   fontSize: 13,
                 ),
               )
-            : HueCategoryBadge(
-                category: filter.category!,
-                size: 24,
-                isSelected: isSelected,
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HueCategoryBadge(
+                    category: filter.category!,
+                    size: 22,
+                    isSelected: isSelected,
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      filter.label,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ],
               ),
       ),
     );

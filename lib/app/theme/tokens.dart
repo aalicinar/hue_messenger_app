@@ -12,11 +12,11 @@ class HueColors {
   static const textSecondary = Color(0xFF6B7280);
   static const separator = Color(0xFFE2E5EB);
 
-  // ── Category solids ──
-  static const red = Color(0xFFEF4444);
-  static const yellow = Color(0xFFF59E0B);
-  static const green = Color(0xFF10B981);
-  static const blue = Color(0xFF3B82F6);
+  // ── Category solids (iOS-vibrant) ──
+  static const red = Color(0xFFFF3B30);
+  static const yellow = Color(0xFFFFB800);
+  static const green = Color(0xFF34C759);
+  static const blue = Color(0xFF007AFF);
 
   // ── Category soft tints ──
   static const redTint = Color(0xFFFEF2F2);

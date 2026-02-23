@@ -8,13 +8,13 @@ extension HueCategoryX on HueCategory {
   String get label {
     switch (this) {
       case HueCategory.red:
-        return 'Kırmızı';
+        return 'Red';
       case HueCategory.yellow:
-        return 'Sarı';
+        return 'Yellow';
       case HueCategory.green:
-        return 'Yeşil';
+        return 'Green';
       case HueCategory.blue:
-        return 'Mavi';
+        return 'Blue';
     }
   }
 

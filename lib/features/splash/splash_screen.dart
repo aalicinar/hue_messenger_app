@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../app/theme/tokens.dart';
+import '../../shared/widgets/hue_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -32,36 +33,20 @@ class _SplashScreenState extends State<SplashScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1a1a2e), // deep navy
-              Color(0xFF6366F1), // indigo
-              Color(0xFF8B5CF6), // violet
-              Color(0xFFA855F7), // purple
-              Color(0xFF1a1a2e), // deep navy
-            ],
-            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+            colors: [Color(0xFF08111F), Color(0xFF0F1D33), Color(0xFF1A2942)],
           ),
         ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Logo ──
-              ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: Image.asset(
-                      'assets/icons/hue_logo_gradient.png',
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                    ),
-                  )
+              const HueLogo(size: 132, enableAnimation: true)
                   .animate()
                   .fadeIn(duration: 800.ms, curve: Curves.easeOut)
                   .scale(
-                    begin: const Offset(0.7, 0.7),
+                    begin: const Offset(0.72, 0.72),
                     end: const Offset(1.0, 1.0),
-                    duration: 800.ms,
+                    duration: 850.ms,
                     curve: Curves.easeOutBack,
                   ),
               const SizedBox(height: HueSpacing.lg),
@@ -69,25 +54,27 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                     'Hue Messenger',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.95),
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
+                      color: Colors.white,
                       letterSpacing: -0.5,
+                      shadows: [
+                        Shadow(
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                          blurRadius: 20,
+                        ),
+                      ],
                     ),
                   )
-                  .animate(delay: 400.ms)
-                  .fadeIn(duration: 600.ms)
-                  .slideY(begin: 0.3, end: 0, duration: 600.ms),
-              const SizedBox(height: 8),
-              Text(
-                'Feel your messages',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 1.5,
-                ),
-              ).animate(delay: 700.ms).fadeIn(duration: 600.ms),
+                  .animate()
+                  .fadeIn(delay: 400.ms, duration: 600.ms)
+                  .slideY(
+                    begin: 0.3,
+                    end: 0,
+                    delay: 400.ms,
+                    duration: 600.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
             ],
           ),
         ),
