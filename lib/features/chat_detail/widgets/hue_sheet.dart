@@ -17,6 +17,7 @@ class HueSheet extends StatefulWidget {
     this.title = 'Select H Template',
     this.allLabel = 'All',
     this.emptyLabel = 'No templates in this category.',
+    this.initialCategory,
     this.categoryLabelBuilder,
   });
 
@@ -25,6 +26,7 @@ class HueSheet extends StatefulWidget {
   final String title;
   final String allLabel;
   final String emptyLabel;
+  final HueCategory? initialCategory;
   final String Function(HueCategory category)? categoryLabelBuilder;
 
   @override
@@ -33,6 +35,12 @@ class HueSheet extends StatefulWidget {
 
 class _HueSheetState extends State<HueSheet> {
   HueCategory? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.initialCategory;
+  }
 
   List<Template> get _filteredTemplates {
     if (_selectedCategory == null) return widget.templates;

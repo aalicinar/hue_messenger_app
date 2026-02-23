@@ -182,6 +182,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   controller: controller,
                   repository: repository,
                 ),
+                onOpenHueCategory: (category) => _openHueSheet(
+                  context: context,
+                  lang: lang,
+                  controller: controller,
+                  repository: repository,
+                  initialCategory: category,
+                ),
               ),
             ],
           ),
@@ -250,6 +257,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     required AppLanguage lang,
     required ChatDetailController controller,
     required MockRepository repository,
+    HueCategory? initialCategory,
   }) async {
     final templates = repository.getTemplates();
     await showCupertinoModalPopup<void>(
@@ -260,6 +268,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           title: S.get(lang, 'hue_sheet_title'),
           allLabel: S.get(lang, 'filter_all'),
           emptyLabel: S.get(lang, 'hue_sheet_empty'),
+          initialCategory: initialCategory,
           categoryLabelBuilder: (category) => _categoryLabel(lang, category),
           onTemplateSelected: (template) async {
             Navigator.of(sheetContext).pop();
